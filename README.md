@@ -7,6 +7,8 @@
 
 A local-only, encrypted personal tax organizer for macOS. Fast, easy tax organization — fully offline.
 
+![Dashboard](images/Dashboard.png)
+
 ## Overview
 
 TaxRabbit helps you organize your tax documents, track income and expenses, and prepare for tax filing — all while keeping your sensitive financial data encrypted and completely offline.
@@ -104,6 +106,8 @@ Open [http://localhost:3000](http://localhost:3000) to access the app.
 1. **Create Your Vault**: Set a strong master password (minimum 8 characters)
 2. **Select Default Tax Year**: Choose the tax year to start organizing
 3. **Start Organizing**: Add income documents, expenses, and receipts
+
+![Vault Setup](images/VaultSetup.png)
 
 ## Docker
 
