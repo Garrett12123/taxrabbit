@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/Garrett12123/taxrabbit#readme
+    about: Check the README for setup and usage information
+  - name: Security Issues
+    url: https://github.com/Garrett12123/taxrabbit/security/policy
+    about: Report security vulnerabilities privately

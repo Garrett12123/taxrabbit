@@ -1,0 +1,1 @@
+ALTER TABLE `income_documents` ADD `state_withholding` integer DEFAULT 0 NOT NULL;
