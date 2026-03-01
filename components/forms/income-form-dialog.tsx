@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState, useTransition } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ClipboardPaste } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
 import {
@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { EinInput } from '@/components/ui/ein-input';
 import { Field, FieldLabel, FieldError } from '@/components/ui/field';
+import { SmartPasteDialog } from '@/components/forms/smart-paste-dialog';
 import { FormTypeSelect } from '@/components/forms/common/form-type-select';
 import { EntityTypeSelect } from '@/components/forms/common/entity-type-select';
 import { CompletenessBadge } from '@/components/forms/common/completeness-badge';
@@ -30,6 +31,7 @@ import {
 import { computeCompleteness } from '@/lib/completeness';
 import type { IncomeFormType } from '@/lib/constants';
 import type { IncomeDocumentDecrypted } from '@/lib/types/income';
+import type { SmartPasteResult } from '@/lib/smart-paste';
 
 type FieldErrors = {
   issuerName?: string;
@@ -87,6 +89,18 @@ export function IncomeFormDialog({
   const [notes, setNotes] = useState(editDocument?.payload.notes ?? '');
   const [boxes, setBoxes] = useState<Record<string, number | string | boolean>>(
     editDocument?.payload.boxes ?? {}
+  );
+  const [smartPasteOpen, setSmartPasteOpen] = useState(false);
+
+  const handleSmartPasteApply = useCallback(
+    (result: SmartPasteResult) => {
+      setBoxes((prev) => ({ ...prev, ...result.boxes }));
+      if (result.issuerName) setIssuerName(result.issuerName);
+      if (result.issuerEin) setIssuerEin(result.issuerEin);
+      if (result.issuerAddress) setIssuerAddress(result.issuerAddress);
+      if (result.issuerState) setIssuerState(result.issuerState);
+    },
+    []
   );
 
   const completeness = computeCompleteness(
@@ -185,8 +199,17 @@ export function IncomeFormDialog({
               ? 'Update the form details below.'
               : 'Enter the details from your tax form.'}
           </DialogDescription>
-          <div className="pt-2">
+          <div className="flex items-center gap-3 pt-2">
             <CompletenessBadge completeness={completeness} showProgress />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSmartPasteOpen(true)}
+              className="h-7 gap-1.5 text-xs"
+            >
+              <ClipboardPaste className="size-3.5" />
+              Paste from PDF
+            </Button>
           </div>
         </DialogHeader>
 
@@ -350,6 +373,13 @@ export function IncomeFormDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <SmartPasteDialog
+        open={smartPasteOpen}
+        onOpenChange={setSmartPasteOpen}
+        formType={formType as IncomeFormType}
+        onApply={handleSmartPasteApply}
+      />
     </Dialog>
   );
 }
