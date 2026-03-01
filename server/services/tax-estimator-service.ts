@@ -366,6 +366,15 @@ function getTaxYearConfig(year: number, filingStatus: FilingStatus): FilingStatu
 const SS_TAX_RATE = 0.124; // 12.4% Social Security portion
 const MEDICARE_TAX_RATE = 0.029; // 2.9% Medicare portion
 const SE_DEDUCTION_RATE = 0.5; // Deduct half of SE tax from income
+const ADDITIONAL_MEDICARE_TAX_RATE = 0.009; // 0.9% Additional Medicare Tax
+
+// Additional Medicare Tax thresholds by filing status (unchanged since 2013)
+const AMT_THRESHOLDS: Record<FilingStatus, number> = {
+  single: 200_000,
+  mfj: 250_000,
+  mfs: 125_000,
+  hoh: 200_000,
+};
 
 // Social Security wage base by year
 const SS_WAGE_BASE: Record<number, number> = {
@@ -388,6 +397,7 @@ export type TaxEstimate = {
   standardDeduction: number; // cents
   taxableIncome: number; // cents
   selfEmploymentTax: number; // cents
+  additionalMedicareTax: number; // cents — 0.9% on SE income exceeding threshold
   federalIncomeTax: number; // cents
   stateWithholding: number; // cents — total state tax withheld from income docs
   totalTax: number; // cents
@@ -473,6 +483,14 @@ export function estimateTaxLiability(year: number): TaxEstimate {
   const medicareTaxDollars = seTaxBaseDollars * MEDICARE_TAX_RATE;
   const seTaxDollars = Math.round(ssTaxDollars + medicareTaxDollars);
 
+  // Additional Medicare Tax (0.9%) on SE income exceeding the filing-status threshold.
+  // W-2 wages "fill up" the threshold first, so only SE income beyond the remaining
+  // threshold is taxed. W-2-only AMT is already handled by employer payroll withholding.
+  const amtThreshold = AMT_THRESHOLDS[filingStatus];
+  const amtSeThresholdDollars = Math.max(amtThreshold - w2WagesDollars, 0);
+  const amtSeExcessDollars = Math.max(seTaxBaseDollars - amtSeThresholdDollars, 0);
+  const additionalMedicareTaxDollars = Math.round(amtSeExcessDollars * ADDITIONAL_MEDICARE_TAX_RATE);
+
   // AGI = non-SE income + net SE income - half of SE tax
   const nonSeDollars = grossDollars - seDollars;
   const seDeductionDollars = Math.round(seTaxDollars * SE_DEDUCTION_RATE);
@@ -487,12 +505,13 @@ export function estimateTaxLiability(year: number): TaxEstimate {
     config.brackets
   );
 
-  const totalTaxDollars = federalTaxDollars + seTaxDollars;
+  const totalTaxDollars = federalTaxDollars + seTaxDollars + additionalMedicareTaxDollars;
   const effectiveRate = grossDollars > 0 ? (totalTaxDollars / grossDollars) * 100 : 0;
 
   // Convert back to cents
   const totalTaxCents = Math.round(totalTaxDollars * 100);
   const seTaxCents = Math.round(seTaxDollars * 100);
+  const additionalMedicareTaxCents = Math.round(additionalMedicareTaxDollars * 100);
   const federalTaxCents = Math.round(federalTaxDollars * 100);
   const taxableIncomeCents = Math.round(taxableIncomeDollars * 100);
   const standardDeductionCents = Math.round(config.standardDeduction * 100);
@@ -508,6 +527,7 @@ export function estimateTaxLiability(year: number): TaxEstimate {
     standardDeduction: standardDeductionCents,
     taxableIncome: taxableIncomeCents,
     selfEmploymentTax: seTaxCents,
+    additionalMedicareTax: additionalMedicareTaxCents,
     federalIncomeTax: federalTaxCents,
     stateWithholding,
     totalTax: totalTaxCents,

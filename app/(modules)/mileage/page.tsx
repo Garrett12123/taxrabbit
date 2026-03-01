@@ -16,7 +16,6 @@ import { ExportCsvButton } from '@/components/common/export-csv-button';
 import {
   getMileageSummary,
   listMileageLogsByYear,
-  getIrsMileageRate,
   getIrsMileageRateTenths,
 } from '@/server/services/mileage-service';
 import { formatCents } from '@/lib/utils';
@@ -40,9 +39,9 @@ export default async function MileagePage({ searchParams }: Props) {
     listMileageLogsByYear(year),
   ]);
 
-  const ratePerMile = getIrsMileageRate(year);
   const rateTenths = getIrsMileageRateTenths(year);
   const displayMiles = (stored: number) => (stored / 100).toFixed(1);
+  const displayRate = (rateTenths / 1000).toFixed(rateTenths % 10 !== 0 ? 3 : 2);
 
   return (
     <div className="space-y-8">
@@ -50,7 +49,7 @@ export default async function MileagePage({ searchParams }: Props) {
         <div>
           <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">Mileage Tracker</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Log business miles for {year}. IRS rate: ${(ratePerMile / 100).toFixed(2)}/mile.
+            Log business miles for {year}. IRS rate: ${displayRate}/mile.
           </p>
         </div>
         {logs.length > 0 && <ExportCsvButton module="mileage" year={year} />}
@@ -95,7 +94,7 @@ export default async function MileagePage({ searchParams }: Props) {
           </CardHeader>
           <CardContent className="pt-0">
             <span className="text-2xl font-bold tabular-nums">
-              ${(ratePerMile / 100).toFixed(2)}
+              ${displayRate}
             </span>
             <p className="text-xs text-muted-foreground mt-1">per mile (IRS {year})</p>
           </CardContent>

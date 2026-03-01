@@ -97,12 +97,21 @@ export function TaxEstimateCard({ estimate, year }: Props) {
           {estimate.selfEmploymentTax > 0 && (
             <Row label="Self-Employment Tax" value={formatCents(estimate.selfEmploymentTax)} />
           )}
-          <Row label="Total Tax" value={formatCents(estimate.totalTax)} />
-          <Row label="Federal Withheld" value={`-${formatCents(estimate.totalWithholding - estimate.stateWithholding)}`} muted />
-          {estimate.stateWithholding > 0 && (
-            <Row label="State Withheld" value={`-${formatCents(estimate.stateWithholding)}`} muted />
+          {estimate.additionalMedicareTax > 0 && (
+            <Row label="Addl. Medicare Tax" value={formatCents(estimate.additionalMedicareTax)} />
           )}
+          <Row label="Total Federal Tax" value={formatCents(estimate.totalTax)} />
+          <Row label="Federal Withheld" value={`-${formatCents(estimate.totalWithholding - estimate.stateWithholding)}`} muted />
         </div>
+
+        {estimate.stateWithholding > 0 && (
+          <div className="pt-2 border-t border-dashed">
+            <Row label="State Withheld (info only)" value={formatCents(estimate.stateWithholding)} muted />
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+              State tax is not estimated. State withholding is shown for reference only.
+            </p>
+          </div>
+        )}
 
         {/* Rates */}
         <div className="flex items-center justify-between pt-2 border-t">

@@ -64,7 +64,7 @@ function setupMocks(opts: {
     totalMiles,
     totalTrips: 0,
     totalDeduction: Math.round((totalMiles / 100) * rate),
-    ratePerMile: rate,
+    ratePerMileTenths: rate * 10,
     monthlyBreakdown: [],
   });
 }
@@ -274,6 +274,58 @@ describe('estimateTaxLiability', () => {
 
       expect(result.totalWithholding).toBe(500_000);
       expect(result.stateWithholding).toBe(100_000);
+    });
+  });
+
+  describe('Additional Medicare Tax', () => {
+    it('applies 0.9% AMT on SE income exceeding $200K threshold (single)', async () => {
+      // $300,000 1099-NEC income, single filer
+      setupMocks({
+        totalIncome: 30_000_000,
+        incomeSummary: [{ formType: '1099-NEC', totalAmount: 30_000_000, count: 1 }],
+      });
+
+      const result = await estimateTaxLiability(2024);
+
+      // SE tax base: $300,000 * 0.9235 = $277,050
+      // AMT threshold (single): $200,000, no W-2 wages to fill it
+      // AMT excess: $277,050 - $200,000 = $77,050
+      // AMT: $77,050 * 0.009 = $693.45 -> $693
+      expect(result.additionalMedicareTax).toBe(69_300);
+      // AMT should be included in totalTax
+      expect(result.totalTax).toBeGreaterThan(
+        result.federalIncomeTax + result.selfEmploymentTax
+      );
+    });
+
+    it('does not apply AMT when SE income is below threshold', async () => {
+      // $100,000 1099-NEC income
+      setupMocks({
+        totalIncome: 10_000_000,
+        incomeSummary: [{ formType: '1099-NEC', totalAmount: 10_000_000, count: 1 }],
+      });
+
+      const result = await estimateTaxLiability(2024);
+      expect(result.additionalMedicareTax).toBe(0);
+    });
+
+    it('reduces AMT threshold by W-2 wages for mixed income', async () => {
+      // $180,000 W-2 + $50,000 1099-NEC
+      setupMocks({
+        totalIncome: 23_000_000,
+        incomeSummary: [
+          { formType: 'W-2', totalAmount: 18_000_000, count: 1 },
+          { formType: '1099-NEC', totalAmount: 5_000_000, count: 1 },
+        ],
+      });
+
+      const result = await estimateTaxLiability(2024);
+
+      // SE tax base: $50,000 * 0.9235 = $46,175
+      // AMT threshold after W-2: $200,000 - $180,000 = $20,000
+      // AMT excess: $46,175 - $20,000 = $26,175
+      // AMT: $26,175 * 0.009 = $235.575 -> $236
+      expect(result.additionalMedicareTax).toBe(23_600);
     });
   });
 

@@ -43,7 +43,7 @@ export type MileageSummary = {
   totalMiles: number; // miles * 100
   totalTrips: number;
   totalDeduction: number; // cents
-  ratePerMile: number; // cents
+  ratePerMileTenths: number; // tenths of a cent (e.g. 700 = $0.70)
   monthlyBreakdown: { month: string; totalMiles: number; tripCount: number }[];
 };
 
@@ -51,7 +51,6 @@ export function getMileageSummary(year: number): MileageSummary {
   const totalMiles = getTotalMiles(year);
   const totalTrips = getMileageLogCount(year);
   const monthlyBreakdown = getMonthlyMileage(year);
-  const ratePerMile = getIrsMileageRate(year);
   const rateTenths = getIrsMileageRateTenths(year);
 
   // miles stored as miles * 100; rate is tenths of a cent per mile
@@ -63,7 +62,7 @@ export function getMileageSummary(year: number): MileageSummary {
     totalMiles,
     totalTrips,
     totalDeduction,
-    ratePerMile,
+    ratePerMileTenths: rateTenths,
     monthlyBreakdown,
   };
 }

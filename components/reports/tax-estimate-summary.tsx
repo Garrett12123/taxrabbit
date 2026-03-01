@@ -64,11 +64,11 @@ export function TaxEstimateSummary({ estimate, year }: Props) {
           {estimate.selfEmploymentTax > 0 && (
             <Row label="Self-Employment Tax" value={formatCents(estimate.selfEmploymentTax)} />
           )}
-          <Row label="Total Estimated Tax" value={formatCents(estimate.totalTax)} bold />
-          <Row label="Federal Withholdings" value={`(${formatCents(estimate.totalWithholding - estimate.stateWithholding)})`} />
-          {estimate.stateWithholding > 0 && (
-            <Row label="State Withholdings" value={`(${formatCents(estimate.stateWithholding)})`} />
+          {estimate.additionalMedicareTax > 0 && (
+            <Row label="Addl. Medicare Tax" value={formatCents(estimate.additionalMedicareTax)} />
           )}
+          <Row label="Total Federal Tax" value={formatCents(estimate.totalTax)} bold />
+          <Row label="Federal Withholdings" value={`(${formatCents(estimate.totalWithholding - estimate.stateWithholding)})`} />
           <div className="flex items-center justify-between py-3">
             <span className="text-sm font-semibold">
               {isRefund ? 'Estimated Refund' : 'Estimated Balance Due'}
@@ -81,6 +81,14 @@ export function TaxEstimateSummary({ estimate, year }: Props) {
             </span>
           </div>
         </div>
+        {estimate.stateWithholding > 0 && (
+          <div className="pt-2 border-t border-dashed">
+            <Row label="State Withholdings (info only)" value={formatCents(estimate.stateWithholding)} />
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">
+              State tax is not estimated. State withholding is shown for reference only.
+            </p>
+          </div>
+        )}
         <div className="mt-4 flex gap-6">
           <div>
             <p className="text-xs text-muted-foreground">Effective Rate</p>

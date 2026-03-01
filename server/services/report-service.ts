@@ -67,7 +67,7 @@ export async function getYearEndSummary(year: number): Promise<YearEndSummary> {
       totalMiles: mileageSummary.totalMiles,
       totalTrips: mileageSummary.totalTrips,
       totalDeduction: mileageSummary.totalDeduction,
-      ratePerMile: mileageSummary.ratePerMile,
+      ratePerMileTenths: mileageSummary.ratePerMileTenths,
     },
     estimatedPayments: estPaymentsOverview.quarters.map((q) => ({
       quarter: q.quarter,

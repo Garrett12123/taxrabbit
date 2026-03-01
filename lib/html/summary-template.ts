@@ -17,7 +17,7 @@ export type SummaryMileage = {
   totalMiles: number; // miles * 100
   totalTrips: number;
   totalDeduction: number; // cents
-  ratePerMile: number; // cents
+  ratePerMileTenths: number; // tenths of a cent (e.g. 700 = $0.70)
 };
 
 export type SummaryEstimatedPayment = {
@@ -213,7 +213,7 @@ export function generateSummaryHTML(data: SummaryData): string {
     </div>
     <div class="summary-box">
       <div class="label">IRS Rate</div>
-      <div class="value">$${(data.mileage.ratePerMile / 100).toFixed(2)}/mi</div>
+      <div class="value">$${(data.mileage.ratePerMileTenths / 1000).toFixed(data.mileage.ratePerMileTenths % 10 !== 0 ? 3 : 2)}/mi</div>
     </div>
     <div class="summary-box">
       <div class="label">Mileage Deduction</div>
