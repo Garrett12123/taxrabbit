@@ -78,6 +78,10 @@ export const FORM_KEYWORDS: Record<IncomeFormType, Record<string, string[]>> = {
     state_income: ['state income', 'state income box'],
     state_tax: ['state tax withheld', 'state tax'],
   },
+  'Other': {
+    box1: ['gross income', 'income', 'amount', 'total', 'payment'],
+    box4: ['federal income tax withheld', 'federal tax withheld', 'tax withheld'],
+  },
 };
 
 /** Keywords for issuer/employer/payer identification */

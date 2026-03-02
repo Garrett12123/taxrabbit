@@ -7,7 +7,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { INCOME_FORM_TYPES } from '@/lib/constants';
+import { INCOME_FORM_TYPES, type IncomeFormType } from '@/lib/constants';
+
+const FORM_TYPE_LABELS: Partial<Record<IncomeFormType, string>> = {
+  'Other': 'Other / No 1099',
+};
 
 type FormTypeSelectProps = {
   value: string;
@@ -28,7 +32,7 @@ export function FormTypeSelect({
       <SelectContent>
         {INCOME_FORM_TYPES.map((type) => (
           <SelectItem key={type} value={type}>
-            {type}
+            {FORM_TYPE_LABELS[type] ?? type}
           </SelectItem>
         ))}
       </SelectContent>

@@ -29,7 +29,11 @@ export const businessProfileSchema = z.object({
     .regex(einRegex, 'EIN must be in format XX-XXXXXXX')
     .optional()
     .or(z.literal('')),
-  address: z.string().max(500).optional(),
+  address: z.string().max(200).optional(),
+  address2: z.string().max(200).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(2).optional(),
+  zip: z.string().max(10).optional(),
   stateOfFormation: z.string().max(50).optional(),
   entityType: entityTypeEnum.optional(),
   accountingMethod: accountingMethodEnum.optional(),

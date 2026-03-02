@@ -12,6 +12,7 @@ export type IncomePayload = {
   issuerEin?: string;
   // Payer/employer address
   issuerAddress?: string;
+  issuerAddress2?: string;
   issuerCity?: string;
   issuerState?: string;
   issuerZip?: string;
@@ -173,6 +174,25 @@ export function getIncomeSummaryByType(
     .from(incomeDocuments)
     .where(eq(incomeDocuments.year, year))
     .groupBy(incomeDocuments.formType)
+    .all();
+
+  return rows;
+}
+
+export function getIncomeSummaryByTypeAndEntity(
+  year: number
+): { formType: string; entityType: string; totalAmount: number; count: number }[] {
+  const db = getDb();
+  const rows = db
+    .select({
+      formType: incomeDocuments.formType,
+      entityType: incomeDocuments.entityType,
+      totalAmount: sql<number>`sum(${incomeDocuments.amount})`,
+      count: sql<number>`count(*)`,
+    })
+    .from(incomeDocuments)
+    .where(eq(incomeDocuments.year, year))
+    .groupBy(incomeDocuments.formType, incomeDocuments.entityType)
     .all();
 
   return rows;

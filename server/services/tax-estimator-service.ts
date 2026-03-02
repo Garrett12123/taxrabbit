@@ -4,6 +4,7 @@ import {
   getTotalIncome,
   getTotalWithholding,
   getIncomeSummaryByType,
+  getIncomeSummaryByTypeAndEntity,
   getTotalStateWithholding,
 } from '@/server/db/dal/income-documents';
 import { getExpenseSummary } from '@/server/services/expense-service';
@@ -446,10 +447,15 @@ export function estimateTaxLiability(year: number): TaxEstimate {
   const mileageSummary = getMileageSummary(year);
   const mileageDeduction = mileageSummary.totalDeduction; // cents
 
-  // Self-employment income: 1099-NEC, 1099-MISC, 1099-K (gig/marketplace income)
+  // Self-employment income: 1099-NEC, 1099-MISC, 1099-K always count.
+  // "Other" counts as SE income only when entityType === 'business'.
   const seTypes = ['1099-NEC', '1099-MISC', '1099-K'];
-  const selfEmploymentIncome = incomeByType
-    .filter((r) => seTypes.includes(r.formType))
+  const incomeByTypeAndEntity = getIncomeSummaryByTypeAndEntity(year);
+  const selfEmploymentIncome = incomeByTypeAndEntity
+    .filter((r) =>
+      seTypes.includes(r.formType) ||
+      (r.formType === 'Other' && r.entityType === 'business')
+    )
     .reduce((sum, r) => sum + r.totalAmount, 0); // cents
 
   const businessExpenses = expenseSummary.totalBusiness; // cents

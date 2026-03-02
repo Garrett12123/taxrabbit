@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Field, FieldLabel, FieldError } from '@/components/ui/field';
+import { AddressFields } from '@/components/forms/common/address-fields';
 import {
   NativeSelect,
   NativeSelectOption,
@@ -157,6 +158,10 @@ function PersonProfileForm({
     profile?.payload.dateOfBirth ?? ''
   );
   const [address, setAddress] = useState(profile?.payload.address ?? '');
+  const [address2, setAddress2] = useState(profile?.payload.address2 ?? '');
+  const [city, setCity] = useState(profile?.payload.city ?? '');
+  const [addrState, setAddrState] = useState(profile?.payload.state ?? '');
+  const [zip, setZip] = useState(profile?.payload.zip ?? '');
   const [phone, setPhone] = useState(profile?.payload.phone?.replace(/\D/g, '') ?? '');
   const [email, setEmail] = useState(profile?.payload.email ?? '');
 
@@ -180,6 +185,10 @@ function PersonProfileForm({
     setSsn(profile?.payload.ssn?.replace(/\D/g, '') ?? '');
     setDateOfBirth(profile?.payload.dateOfBirth ?? '');
     setAddress(profile?.payload.address ?? '');
+    setAddress2(profile?.payload.address2 ?? '');
+    setCity(profile?.payload.city ?? '');
+    setAddrState(profile?.payload.state ?? '');
+    setZip(profile?.payload.zip ?? '');
     setPhone(profile?.payload.phone?.replace(/\D/g, '') ?? '');
     setEmail(profile?.payload.email ?? '');
     setError(null);
@@ -235,6 +244,10 @@ function PersonProfileForm({
         ssn: formattedSsn,
         dateOfBirth: dateOfBirth || undefined,
         address: address.trim() || undefined,
+        address2: address2.trim() || undefined,
+        city: city.trim() || undefined,
+        state: addrState.trim().toUpperCase() || undefined,
+        zip: zip.trim() || undefined,
         phone: formattedPhone,
         email: email.trim() || undefined,
       });
@@ -253,7 +266,7 @@ function PersonProfileForm({
       setSuccess(true);
       toast.success('Personal profile saved.');
     });
-  }, [year, firstName, lastName, ssn, dateOfBirth, address, phone, email, onSaved, validateFields, markClean]);
+  }, [year, firstName, lastName, ssn, dateOfBirth, address, address2, city, addrState, zip, phone, email, onSaved, validateFields, markClean]);
 
   // Cmd+S to save
   useSaveShortcut(handleSave, !isPending);
@@ -324,14 +337,24 @@ function PersonProfileForm({
           </Field>
         </div>
 
-        <Field>
-          <FieldLabel>Address</FieldLabel>
-          <Input
-            value={address}
-            onChange={(e) => handleFieldChange(setAddress, e.target.value)}
-            placeholder="Full mailing address"
-          />
-        </Field>
+        <AddressFields
+          address={address}
+          address2={address2}
+          city={city}
+          state={addrState}
+          zip={zip}
+          onChange={(field, value) => {
+            switch (field) {
+              case 'address': handleFieldChange(setAddress, value); break;
+              case 'address2': handleFieldChange(setAddress2, value); break;
+              case 'city': handleFieldChange(setCity, value); break;
+              case 'state': handleFieldChange(setAddrState, value); break;
+              case 'zip': handleFieldChange(setZip, value); break;
+            }
+          }}
+          addressLabel="Address"
+          addressPlaceholder="Street address"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>

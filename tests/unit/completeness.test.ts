@@ -80,6 +80,19 @@ describe('computeCompleteness', () => {
     expect(result.status).toBe('complete');
   });
 
+  it('handles Other form type — complete with box1 and issuer', () => {
+    const result = computeCompleteness('Other', {
+      box1: 5000,
+    }, 'Client LLC');
+    expect(result.status).toBe('complete');
+    expect(result.missingRequired).toHaveLength(0);
+  });
+
+  it('handles Other form type — flags missing box1', () => {
+    const result = computeCompleteness('Other', {}, 'Client LLC');
+    expect(result.missingRequired).toContain('Gross income');
+  });
+
   it('handles checkbox fields — only true counts as filled', () => {
     const result = computeCompleteness('W-2', {
       box1: 50000,

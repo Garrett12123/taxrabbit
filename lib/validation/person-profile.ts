@@ -21,7 +21,11 @@ export const personProfileSchema = z.object({
     .optional()
     .or(z.literal('')),
   dateOfBirth: z.string().max(10).optional(),
-  address: z.string().max(500).optional(),
+  address: z.string().max(200).optional(),
+  address2: z.string().max(200).optional(),
+  city: z.string().max(100).optional(),
+  state: z.string().max(2).optional(),
+  zip: z.string().max(10).optional(),
   phone: z.string().max(20).optional(),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
 });

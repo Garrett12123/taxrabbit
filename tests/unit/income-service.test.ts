@@ -46,6 +46,14 @@ describe('extractPrimaryAmount', () => {
   it('returns 0 for missing box', () => {
     expect(extractPrimaryAmount('W-2', {})).toBe(0);
   });
+
+  it('extracts box1 for Other', () => {
+    expect(extractPrimaryAmount('Other', { box1: 15000 })).toBe(15000);
+  });
+
+  it('extracts box1a for 1099-K', () => {
+    expect(extractPrimaryAmount('1099-K', { box1a: 25000 })).toBe(25000);
+  });
 });
 
 describe('extractFedWithholding', () => {
@@ -76,5 +84,13 @@ describe('extractFedWithholding', () => {
 
   it('returns 0 when box is missing', () => {
     expect(extractFedWithholding('W-2', {})).toBe(0);
+  });
+
+  it('extracts box4 for Other', () => {
+    expect(extractFedWithholding('Other', { box4: 750 })).toBe(750);
+  });
+
+  it('extracts box4 for 1099-K', () => {
+    expect(extractFedWithholding('1099-K', { box4: 1500 })).toBe(1500);
   });
 });

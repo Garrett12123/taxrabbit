@@ -10,6 +10,10 @@ export type BusinessPayload = {
   businessName: string;
   ein?: string;
   address?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   stateOfFormation?: string;
   entityType?: string;
   accountingMethod?: string;

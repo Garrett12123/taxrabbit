@@ -103,6 +103,12 @@ export const kBoxesSchema = z.object({
   state_tax: moneyField,
 });
 
+export const otherBoxesSchema = z.object({
+  box1: requiredMoneyField,
+  description: z.string().max(500).optional(),
+  box4: moneyField,
+});
+
 export const FORM_SCHEMAS: Record<string, z.ZodObject<z.ZodRawShape>> = {
   'W-2': w2BoxesSchema,
   '1099-NEC': necBoxesSchema,
@@ -110,6 +116,7 @@ export const FORM_SCHEMAS: Record<string, z.ZodObject<z.ZodRawShape>> = {
   '1099-DIV': divBoxesSchema,
   '1099-MISC': miscBoxesSchema,
   '1099-K': kBoxesSchema,
+  'Other': otherBoxesSchema,
 };
 
 export const incomeFormInputSchema = z.object({
@@ -132,6 +139,7 @@ export const incomeFormInputSchema = z.object({
   issuerEin: z.string().max(20).optional(),
   // Address fields for payer/employer
   issuerAddress: z.string().max(200).optional(),
+  issuerAddress2: z.string().max(200).optional(),
   issuerCity: z.string().max(100).optional(),
   issuerState: z.string().max(2).optional(),
   issuerZip: z.string().max(10).optional(),

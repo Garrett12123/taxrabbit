@@ -3,6 +3,7 @@ export type IncomePayload = {
   issuerEin?: string;
   // Payer/employer address
   issuerAddress?: string;
+  issuerAddress2?: string;
   issuerCity?: string;
   issuerState?: string;
   issuerZip?: string;

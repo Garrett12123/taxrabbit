@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Field, FieldLabel, FieldError, FieldMessage } from '@/components/ui/field';
+import { AddressFields } from '@/components/forms/common/address-fields';
 import { saveBusinessProfileAction } from '@/app/(modules)/llc/actions';
 import type { BusinessProfileDecrypted } from '@/server/db/dal/business-profiles';
 
@@ -64,6 +65,10 @@ export function BusinessProfileForm({
   );
   const [ein, setEin] = useState(profile?.payload.ein?.replace(/\D/g, '') ?? '');
   const [address, setAddress] = useState(profile?.payload.address ?? '');
+  const [address2, setAddress2] = useState(profile?.payload.address2 ?? '');
+  const [city, setCity] = useState(profile?.payload.city ?? '');
+  const [addrState, setAddrState] = useState(profile?.payload.state ?? '');
+  const [zip, setZip] = useState(profile?.payload.zip ?? '');
   const [stateOfFormation, setStateOfFormation] = useState(
     profile?.payload.stateOfFormation ?? ''
   );
@@ -111,6 +116,10 @@ export function BusinessProfileForm({
         businessName: businessName.trim(),
         ein: formattedEin,
         address: address.trim() || undefined,
+        address2: address2.trim() || undefined,
+        city: city.trim() || undefined,
+        state: addrState.trim().toUpperCase() || undefined,
+        zip: zip.trim() || undefined,
         stateOfFormation: stateOfFormation.trim() || undefined,
         entityType: entityType || undefined,
         accountingMethod: accountingMethod || undefined,
@@ -132,6 +141,10 @@ export function BusinessProfileForm({
     businessName,
     ein,
     address,
+    address2,
+    city,
+    addrState,
+    zip,
     stateOfFormation,
     entityType,
     accountingMethod,
@@ -171,14 +184,24 @@ export function BusinessProfileForm({
           </Field>
         </div>
 
-        <Field>
-          <FieldLabel>Address</FieldLabel>
-          <Input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Business address"
-          />
-        </Field>
+        <AddressFields
+          address={address}
+          address2={address2}
+          city={city}
+          state={addrState}
+          zip={zip}
+          onChange={(field, value) => {
+            switch (field) {
+              case 'address': setAddress(value); break;
+              case 'address2': setAddress2(value); break;
+              case 'city': setCity(value); break;
+              case 'state': setAddrState(value); break;
+              case 'zip': setZip(value); break;
+            }
+          }}
+          addressLabel="Business Address"
+          addressPlaceholder="Business address"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>

@@ -96,6 +96,10 @@ export async function savePersonProfileAction(
       ssn: rest.ssn || undefined,
       dateOfBirth: rest.dateOfBirth || undefined,
       address: rest.address || undefined,
+      address2: rest.address2 || undefined,
+      city: rest.city || undefined,
+      state: rest.state || undefined,
+      zip: rest.zip || undefined,
       phone: rest.phone || undefined,
       email: rest.email || undefined,
     };

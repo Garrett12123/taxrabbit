@@ -60,6 +60,7 @@ export const INCOME_FORM_TYPES = [
   '1099-DIV',
   '1099-MISC',
   '1099-K',
+  'Other',
 ] as const;
 
 export type IncomeFormType = (typeof INCOME_FORM_TYPES)[number];
@@ -185,6 +186,12 @@ export const K_1099_BOX_DEFINITIONS: BoxDefinition[] = [
   { key: 'state_tax', label: 'State tax withheld', type: 'money', section: 'state' },
 ];
 
+export const OTHER_BOX_DEFINITIONS: BoxDefinition[] = [
+  { key: 'box1', label: 'Gross income', type: 'money', required: true, section: 'federal' },
+  { key: 'description', label: 'Income description/source', type: 'text', section: 'other' },
+  { key: 'box4', label: 'Federal tax withheld', type: 'money', section: 'federal' },
+];
+
 export const FORM_BOX_DEFINITIONS: Record<IncomeFormType, BoxDefinition[]> = {
   'W-2': W2_BOX_DEFINITIONS,
   '1099-NEC': NEC_1099_BOX_DEFINITIONS,
@@ -192,6 +199,7 @@ export const FORM_BOX_DEFINITIONS: Record<IncomeFormType, BoxDefinition[]> = {
   '1099-DIV': DIV_1099_BOX_DEFINITIONS,
   '1099-MISC': MISC_1099_BOX_DEFINITIONS,
   '1099-K': K_1099_BOX_DEFINITIONS,
+  'Other': OTHER_BOX_DEFINITIONS,
 };
 
 export const W2_BOX12_CODES = [

@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { EinInput } from '@/components/ui/ein-input';
 import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { SmartPasteDialog } from '@/components/forms/smart-paste-dialog';
+import { AddressFields } from '@/components/forms/common/address-fields';
 import { FormTypeSelect } from '@/components/forms/common/form-type-select';
 import { EntityTypeSelect } from '@/components/forms/common/entity-type-select';
 import { CompletenessBadge } from '@/components/forms/common/completeness-badge';
@@ -71,6 +72,9 @@ export function IncomeFormDialog({
   const [issuerAddress, setIssuerAddress] = useState(
     editDocument?.payload.issuerAddress ?? ''
   );
+  const [issuerAddress2, setIssuerAddress2] = useState(
+    editDocument?.payload.issuerAddress2 ?? ''
+  );
   const [issuerCity, setIssuerCity] = useState(
     editDocument?.payload.issuerCity ?? ''
   );
@@ -98,6 +102,7 @@ export function IncomeFormDialog({
       if (result.issuerName) setIssuerName(result.issuerName);
       if (result.issuerEin) setIssuerEin(result.issuerEin);
       if (result.issuerAddress) setIssuerAddress(result.issuerAddress);
+      if (result.issuerAddress2) setIssuerAddress2(result.issuerAddress2);
       if (result.issuerState) setIssuerState(result.issuerState);
     },
     []
@@ -143,6 +148,7 @@ export function IncomeFormDialog({
         issuerName: issuerName.trim(),
         issuerEin: formattedEin,
         issuerAddress: issuerAddress.trim() || undefined,
+        issuerAddress2: issuerAddress2.trim() || undefined,
         issuerCity: issuerCity.trim() || undefined,
         issuerState: issuerState.trim().toUpperCase() || undefined,
         issuerZip: issuerZip.trim() || undefined,
@@ -174,6 +180,7 @@ export function IncomeFormDialog({
     issuerName,
     issuerEin,
     issuerAddress,
+    issuerAddress2,
     issuerCity,
     issuerState,
     issuerZip,
@@ -267,42 +274,22 @@ export function IncomeFormDialog({
                   {fieldErrors.issuerEin && <FieldError>{fieldErrors.issuerEin}</FieldError>}
                 </Field>
               </div>
-              <Field>
-                <FieldLabel>Street Address</FieldLabel>
-                <Input
-                  value={issuerAddress}
-                  onChange={(e) => setIssuerAddress(e.target.value)}
-                  placeholder="123 Main St, Suite 100"
-                />
-              </Field>
-              <div className="grid gap-4 sm:grid-cols-4">
-                <Field className="sm:col-span-2">
-                  <FieldLabel>City</FieldLabel>
-                  <Input
-                    value={issuerCity}
-                    onChange={(e) => setIssuerCity(e.target.value)}
-                    placeholder="City"
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>State</FieldLabel>
-                  <Input
-                    value={issuerState}
-                    onChange={(e) => setIssuerState(e.target.value.toUpperCase().slice(0, 2))}
-                    placeholder="CA"
-                    maxLength={2}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel>ZIP</FieldLabel>
-                  <Input
-                    value={issuerZip}
-                    onChange={(e) => setIssuerZip(e.target.value)}
-                    placeholder="12345"
-                    maxLength={10}
-                  />
-                </Field>
-              </div>
+              <AddressFields
+                address={issuerAddress}
+                address2={issuerAddress2}
+                city={issuerCity}
+                state={issuerState}
+                zip={issuerZip}
+                onChange={(field, value) => {
+                  switch (field) {
+                    case 'address': setIssuerAddress(value); break;
+                    case 'address2': setIssuerAddress2(value); break;
+                    case 'city': setIssuerCity(value); break;
+                    case 'state': setIssuerState(value); break;
+                    case 'zip': setIssuerZip(value); break;
+                  }
+                }}
+              />
               {/* Account/Control Number - show based on form type */}
               <div className="grid gap-4 sm:grid-cols-2">
                 {formType === 'W-2' && (

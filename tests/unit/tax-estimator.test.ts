@@ -5,6 +5,7 @@ vi.mock('@/server/db/dal/income-documents', () => ({
   getTotalIncome: vi.fn(),
   getTotalWithholding: vi.fn(),
   getIncomeSummaryByType: vi.fn(),
+  getIncomeSummaryByTypeAndEntity: vi.fn(),
   getTotalStateWithholding: vi.fn(),
 }));
 
@@ -25,6 +26,7 @@ import {
   getTotalIncome,
   getTotalWithholding,
   getIncomeSummaryByType,
+  getIncomeSummaryByTypeAndEntity,
   getTotalStateWithholding,
 } from '@/server/db/dal/income-documents';
 import { getExpenseSummary } from '@/server/services/expense-service';
@@ -34,6 +36,7 @@ import { getFilingStatus } from '@/server/db/dal/tax-years';
 const mockGetTotalIncome = vi.mocked(getTotalIncome);
 const mockGetTotalWithholding = vi.mocked(getTotalWithholding);
 const mockGetIncomeSummaryByType = vi.mocked(getIncomeSummaryByType);
+const mockGetIncomeSummaryByTypeAndEntity = vi.mocked(getIncomeSummaryByTypeAndEntity);
 const mockGetTotalStateWithholding = vi.mocked(getTotalStateWithholding);
 const mockGetExpenseSummary = vi.mocked(getExpenseSummary);
 const mockGetMileageSummary = vi.mocked(getMileageSummary);
@@ -44,6 +47,7 @@ function setupMocks(opts: {
   fedWithholding?: number;
   stateWithholding?: number;
   incomeSummary: { formType: string; totalAmount: number; count: number }[];
+  incomeSummaryByTypeAndEntity?: { formType: string; entityType: string; totalAmount: number; count: number }[];
   totalBusiness?: number;
   totalMiles?: number; // miles * 100
   mileageRate?: number; // cents per mile
@@ -52,6 +56,14 @@ function setupMocks(opts: {
   mockGetTotalWithholding.mockReturnValue(opts.fedWithholding ?? 0);
   mockGetTotalStateWithholding.mockReturnValue(opts.stateWithholding ?? 0);
   mockGetIncomeSummaryByType.mockReturnValue(opts.incomeSummary);
+  // Derive type+entity summary from incomeSummary if not explicitly provided
+  mockGetIncomeSummaryByTypeAndEntity.mockReturnValue(
+    opts.incomeSummaryByTypeAndEntity ??
+      opts.incomeSummary.map((r) => ({
+        ...r,
+        entityType: r.formType === 'W-2' ? 'personal' : 'business',
+      }))
+  );
   mockGetExpenseSummary.mockReturnValue({
     totalAll: opts.totalBusiness ?? 0,
     totalPersonal: 0,

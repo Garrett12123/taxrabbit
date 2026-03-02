@@ -22,6 +22,7 @@ export type SmartPasteResult = {
   issuerName?: string;
   issuerEin?: string;
   issuerAddress?: string;
+  issuerAddress2?: string;
   issuerCity?: string;
   issuerState?: string;
   issuerZip?: string;

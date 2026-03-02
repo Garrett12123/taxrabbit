@@ -28,6 +28,8 @@ export function extractPrimaryAmount(
       return typeof boxes.box1 === 'number' ? boxes.box1 : 0;
     case '1099-NEC':
       return typeof boxes.box1 === 'number' ? boxes.box1 : 0;
+    case 'Other':
+      return typeof boxes.box1 === 'number' ? boxes.box1 : 0;
     case '1099-INT':
       return typeof boxes.box1 === 'number' ? boxes.box1 : 0;
     case '1099-DIV':
@@ -59,6 +61,7 @@ export function extractFedWithholding(
     case '1099-DIV':
     case '1099-MISC':
     case '1099-K':
+    case 'Other':
       return typeof boxes.box4 === 'number' ? boxes.box4 : 0;
     default:
       return 0;
@@ -99,6 +102,7 @@ function buildIncomePayload(input: IncomeFormInput): {
     issuerName: input.issuerName,
     issuerEin: input.issuerEin,
     issuerAddress: input.issuerAddress,
+    issuerAddress2: input.issuerAddress2,
     issuerCity: input.issuerCity,
     issuerState: input.issuerState,
     issuerZip: input.issuerZip,
