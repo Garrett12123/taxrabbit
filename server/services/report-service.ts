@@ -7,6 +7,7 @@ import {
 } from '@/server/services/analytics-service';
 import { getDocumentSummary } from '@/server/services/document-service';
 import { getMileageSummary } from '@/server/services/mileage-service';
+import { getUtilitySummary } from '@/server/services/utility-service';
 import { getQuarterlyOverview } from '@/server/services/estimated-payments-service';
 import { getCompletionStats } from '@/server/db/dal/checklist-items';
 import type { SummaryData } from '@/lib/html/summary-template';
@@ -23,6 +24,7 @@ export async function getYearEndSummary(year: number): Promise<YearEndSummary> {
     checklistStats,
     mileageSummary,
     estPaymentsOverview,
+    utilitySummary,
   ] = await Promise.all([
     getDashboardOverview(year),
     getIncomeByType(year),
@@ -32,6 +34,7 @@ export async function getYearEndSummary(year: number): Promise<YearEndSummary> {
     Promise.resolve(getCompletionStats(year)),
     Promise.resolve(getMileageSummary(year)),
     getQuarterlyOverview(year),
+    getUtilitySummary(year),
   ]);
 
   // If a category appears in both personal and business, split into separate rows
@@ -68,6 +71,12 @@ export async function getYearEndSummary(year: number): Promise<YearEndSummary> {
       totalTrips: mileageSummary.totalTrips,
       totalDeduction: mileageSummary.totalDeduction,
       ratePerMileTenths: mileageSummary.ratePerMileTenths,
+    },
+    utilityBills: {
+      totalCost: utilitySummary.totalCost,
+      homeOfficePercent: utilitySummary.homeOfficePercent,
+      businessDeduction: utilitySummary.businessDeduction,
+      byType: utilitySummary.byType,
     },
     estimatedPayments: estPaymentsOverview.quarters.map((q) => ({
       quarter: q.quarter,

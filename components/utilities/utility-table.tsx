@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { useState, useMemo, useTransition } from 'react';
+import { MoreHorizontal, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import {
   Table,
@@ -12,6 +12,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +42,8 @@ import { deleteUtilityBillAction } from '@/app/(modules)/utilities/actions';
 import { formatCents, cn } from '@/lib/utils';
 import type { UtilityBillDecrypted } from '@/server/db/dal/utility-bills';
 
+const PAGE_SIZES = [10, 25, 50] as const;
+
 type UtilityTableProps = {
   bills: UtilityBillDecrypted[];
   year: number;
@@ -47,6 +56,21 @@ export function UtilityTable({ bills, year }: UtilityTableProps) {
     provider: string;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
+
+  const totalPages = Math.max(1, Math.ceil(bills.length / pageSize));
+  const clampedPage = Math.min(page, totalPages - 1);
+
+  const paginatedBills = useMemo(() => {
+    const start = clampedPage * pageSize;
+    return bills.slice(start, start + pageSize);
+  }, [bills, clampedPage, pageSize]);
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(Number(size));
+    setPage(0);
+  };
 
   const handleDelete = () => {
     if (!deleteBill) return;
@@ -70,7 +94,7 @@ export function UtilityTable({ bills, year }: UtilityTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {bills.map((bill) => (
+          {paginatedBills.map((bill) => (
             <TableRow key={bill.id} className="group/row">
               <TableCell className="whitespace-nowrap text-muted-foreground">
                 {bill.billDate}
@@ -137,6 +161,49 @@ export function UtilityTable({ bills, year }: UtilityTableProps) {
           ))}
         </TableBody>
       </Table>
+
+      {bills.length > PAGE_SIZES[0] && (
+        <div className="flex items-center justify-between border-t pt-4 mt-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Rows per page</span>
+            <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
+              <SelectTrigger className="h-8 w-[70px]" aria-label="Rows per page">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {clampedPage * pageSize + 1}–{Math.min((clampedPage + 1) * pageSize, bills.length)} of {bills.length}
+            </span>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={clampedPage === 0}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={clampedPage >= totalPages - 1}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {editBill && (
         <UtilityFormDialog

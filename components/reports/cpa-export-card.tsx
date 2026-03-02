@@ -61,8 +61,9 @@ export function CPAExportCard({ year }: Props) {
       <CardHeader>
         <CardTitle>CPA Packet Export</CardTitle>
         <CardDescription>
-          Generate a ZIP file with income forms, expenses, and a summary report
-          for your tax preparer.
+          Generate a comprehensive ZIP with all income, expenses, mileage,
+          utility bills, estimated payments, tax estimate, profiles, and HTML
+          reports for your tax preparer.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

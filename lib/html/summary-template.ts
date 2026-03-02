@@ -28,6 +28,13 @@ export type SummaryEstimatedPayment = {
   isPaid: boolean;
 };
 
+export type SummaryUtilityBills = {
+  totalCost: number; // cents
+  homeOfficePercent: number; // 0-100
+  businessDeduction: number; // cents
+  byType: { utilityType: string; total: number; count: number }[];
+};
+
 export type SummaryData = {
   year: number;
   generatedAt: string;
@@ -43,6 +50,7 @@ export type SummaryData = {
     byCategory: SummaryExpenseByCategory[];
   };
   mileage?: SummaryMileage;
+  utilityBills?: SummaryUtilityBills;
   estimatedPayments?: SummaryEstimatedPayment[];
   documents: {
     totalCount: number;
@@ -220,6 +228,46 @@ export function generateSummaryHTML(data: SummaryData): string {
       <div class="value">${fmtDollars(data.mileage.totalDeduction)}</div>
     </div>
   </div>`
+      : ''
+  }
+
+  ${
+    data.utilityBills && data.utilityBills.byType.length > 0
+      ? `<h2>Utility Bills</h2>
+  <div class="summary-grid">
+    <div class="summary-box">
+      <div class="label">Total Cost</div>
+      <div class="value">${fmtDollars(data.utilityBills.totalCost)}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">Home Office %</div>
+      <div class="value">${data.utilityBills.homeOfficePercent}%</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">Business Deduction</div>
+      <div class="value">${fmtDollars(data.utilityBills.businessDeduction)}</div>
+    </div>
+    <div class="summary-box">
+      <div class="label">Bill Count</div>
+      <div class="value">${data.utilityBills.byType.reduce((s, r) => s + r.count, 0)}</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Utility Type</th><th class="num">Count</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+      ${data.utilityBills.byType
+        .map(
+          (r) => `
+        <tr>
+          <td>${escapeHtml(r.utilityType)}</td>
+          <td class="num">${r.count}</td>
+          <td class="num">${fmtDollars(r.total)}</td>
+        </tr>`
+        )
+        .join('')}
+      <tr class="total-row"><td>Total</td><td class="num">${data.utilityBills.byType.reduce((s, r) => s + r.count, 0)}</td><td class="num">${fmtDollars(data.utilityBills.totalCost)}</td></tr>
+    </tbody>
+  </table>`
       : ''
   }
 

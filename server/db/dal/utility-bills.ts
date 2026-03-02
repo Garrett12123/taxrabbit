@@ -69,6 +69,8 @@ export async function listUtilityBillsByYear(
   year: number,
   filters?: {
     utilityType?: string;
+    startDate?: string;
+    endDate?: string;
   }
 ): Promise<UtilityBillDecrypted[]> {
   const db = getDb();
@@ -76,6 +78,12 @@ export async function listUtilityBillsByYear(
 
   if (filters?.utilityType) {
     conditions.push(eq(utilityBills.utilityType, filters.utilityType));
+  }
+  if (filters?.startDate) {
+    conditions.push(sql`${utilityBills.billDate} >= ${filters.startDate}`);
+  }
+  if (filters?.endDate) {
+    conditions.push(sql`${utilityBills.billDate} <= ${filters.endDate}`);
   }
 
   const rows = db
