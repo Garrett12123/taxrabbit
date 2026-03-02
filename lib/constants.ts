@@ -10,6 +10,7 @@ import {
   Calendar,
   Car,
   ClipboardCheck,
+  Zap,
 } from 'lucide-react';
 
 export const TAX_YEARS = [2020, 2021, 2022, 2023, 2024, 2025, 2026] as const;
@@ -65,6 +66,18 @@ export const INCOME_FORM_TYPES = [
 
 export type IncomeFormType = (typeof INCOME_FORM_TYPES)[number];
 
+export const UTILITY_TYPES = ['Water', 'Electric', 'Gas', 'Internet', 'Trash', 'Other'] as const;
+export type UtilityType = (typeof UTILITY_TYPES)[number];
+
+export const UTILITY_USAGE_UNITS: Record<UtilityType, string> = {
+  Water: 'gallons',
+  Electric: 'kWh',
+  Gas: 'therms',
+  Internet: 'Mbps',
+  Trash: 'pickups',
+  Other: '',
+};
+
 export const NAV_ITEMS = [
   { label: 'Overview', href: '/overview', icon: LayoutDashboard },
   { label: 'Income', href: '/income', icon: DollarSign },
@@ -73,6 +86,7 @@ export const NAV_ITEMS = [
   { label: 'Documents', href: '/documents', icon: FileText },
   { label: 'Imports', href: '/imports', icon: Upload },
   { label: 'Mileage', href: '/mileage', icon: Car },
+  { label: 'Utilities', href: '/utilities', icon: Zap },
   { label: 'Quarterly', href: '/estimated-payments', icon: Calendar },
   { label: 'Reports', href: '/reports', icon: BarChart3 },
   { label: 'Checklist', href: '/checklist', icon: ClipboardCheck },

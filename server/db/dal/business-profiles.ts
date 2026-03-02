@@ -19,6 +19,7 @@ export type BusinessPayload = {
   accountingMethod?: string;
   startDate?: string;
   notes?: string;
+  homeOfficePercent?: number;
 };
 
 export type BusinessProfileRecord = typeof businessProfiles.$inferSelect;

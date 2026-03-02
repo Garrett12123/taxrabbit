@@ -35,6 +35,7 @@ export async function saveBusinessProfile(
     accountingMethod: input.accountingMethod,
     startDate: input.startDate,
     notes: input.notes,
+    homeOfficePercent: input.homeOfficePercent,
   };
 
   const existing = await getBusinessProfileForYear(year);

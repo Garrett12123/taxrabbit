@@ -48,7 +48,7 @@ export async function getQuarterlyOverview(
   estimatedOwed: number;
   nextDueQuarter: QuarterlyStatus | null;
 }> {
-  const taxEstimate = estimateTaxLiability(year);
+  const taxEstimate = await estimateTaxLiability(year);
   const payments = await listEstimatedPaymentsByYear(year);
   const today = new Date().toISOString().slice(0, 10);
 

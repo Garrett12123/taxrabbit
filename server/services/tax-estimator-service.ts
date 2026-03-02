@@ -9,6 +9,7 @@ import {
 } from '@/server/db/dal/income-documents';
 import { getExpenseSummary } from '@/server/services/expense-service';
 import { getMileageSummary } from '@/server/services/mileage-service';
+import { getUtilityDeduction } from '@/server/services/utility-service';
 import { getFilingStatus, type FilingStatus } from '@/server/db/dal/tax-years';
 
 // ─── Federal Tax Brackets by Year and Filing Status ────────────
@@ -395,6 +396,7 @@ export type TaxEstimate = {
   selfEmploymentIncome: number; // cents
   businessExpenses: number; // cents
   mileageDeduction: number; // cents
+  utilityDeduction: number; // cents — home office utility deduction
   standardDeduction: number; // cents
   taxableIncome: number; // cents
   selfEmploymentTax: number; // cents
@@ -435,7 +437,7 @@ function calculateFederalTax(
   return { tax: Math.round(tax), marginalRate };
 }
 
-export function estimateTaxLiability(year: number): TaxEstimate {
+export async function estimateTaxLiability(year: number): Promise<TaxEstimate> {
   const filingStatus = getFilingStatus(year);
   const config = getTaxYearConfig(year, filingStatus);
   const grossIncome = getTotalIncome(year); // cents
@@ -446,6 +448,7 @@ export function estimateTaxLiability(year: number): TaxEstimate {
   const expenseSummary = getExpenseSummary(year);
   const mileageSummary = getMileageSummary(year);
   const mileageDeduction = mileageSummary.totalDeduction; // cents
+  const utilityDeduction = await getUtilityDeduction(year); // cents
 
   // Self-employment income: 1099-NEC, 1099-MISC, 1099-K always count.
   // "Other" counts as SE income only when entityType === 'business'.
@@ -460,8 +463,8 @@ export function estimateTaxLiability(year: number): TaxEstimate {
 
   const businessExpenses = expenseSummary.totalBusiness; // cents
 
-  // Total business deductions = business expenses + mileage deduction
-  const totalBusinessDeductions = businessExpenses + mileageDeduction; // cents
+  // Total business deductions = business expenses + mileage deduction + utility deduction
+  const totalBusinessDeductions = businessExpenses + mileageDeduction + utilityDeduction; // cents
 
   // Convert to dollars for bracket calculation
   const grossDollars = grossIncome / 100;
@@ -530,6 +533,7 @@ export function estimateTaxLiability(year: number): TaxEstimate {
     selfEmploymentIncome,
     businessExpenses,
     mileageDeduction,
+    utilityDeduction,
     standardDeduction: standardDeductionCents,
     taxableIncome: taxableIncomeCents,
     selfEmploymentTax: seTaxCents,

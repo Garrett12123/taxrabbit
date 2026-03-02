@@ -195,6 +195,29 @@ export const mileageLogs = sqliteTable(
   ]
 );
 
+// ─── utility_bills ─────────────────────────────────────────────
+
+export const utilityBills = sqliteTable(
+  'utility_bills',
+  {
+    id: text('id').primaryKey(),
+    year: integer('year')
+      .notNull()
+      .references(() => taxYears.year, { onDelete: 'cascade' }),
+    utilityType: text('utility_type').notNull(),
+    billDate: text('bill_date').notNull(),
+    amount: integer('amount').notNull(), // cents
+    payloadEncrypted: text('payload_encrypted').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [
+    index('idx_utility_bills_year').on(table.year),
+    index('idx_utility_bills_year_type').on(table.year, table.utilityType),
+    index('idx_utility_bills_year_date').on(table.year, table.billDate),
+  ]
+);
+
 // ─── checklist_items ────────────────────────────────────────────
 
 export const checklistItems = sqliteTable(

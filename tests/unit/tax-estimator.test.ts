@@ -17,6 +17,10 @@ vi.mock('@/server/services/mileage-service', () => ({
   getMileageSummary: vi.fn(),
 }));
 
+vi.mock('@/server/services/utility-service', () => ({
+  getUtilityDeduction: vi.fn(() => Promise.resolve(0)),
+}));
+
 vi.mock('@/server/db/dal/tax-years', () => ({
   getFilingStatus: vi.fn(() => 'single'),
 }));
@@ -31,6 +35,7 @@ import {
 } from '@/server/db/dal/income-documents';
 import { getExpenseSummary } from '@/server/services/expense-service';
 import { getMileageSummary } from '@/server/services/mileage-service';
+import { getUtilityDeduction } from '@/server/services/utility-service';
 import { getFilingStatus } from '@/server/db/dal/tax-years';
 
 const mockGetTotalIncome = vi.mocked(getTotalIncome);
@@ -40,6 +45,7 @@ const mockGetIncomeSummaryByTypeAndEntity = vi.mocked(getIncomeSummaryByTypeAndE
 const mockGetTotalStateWithholding = vi.mocked(getTotalStateWithholding);
 const mockGetExpenseSummary = vi.mocked(getExpenseSummary);
 const mockGetMileageSummary = vi.mocked(getMileageSummary);
+const mockGetUtilityDeduction = vi.mocked(getUtilityDeduction);
 const mockGetFilingStatus = vi.mocked(getFilingStatus);
 
 function setupMocks(opts: {
@@ -51,6 +57,7 @@ function setupMocks(opts: {
   totalBusiness?: number;
   totalMiles?: number; // miles * 100
   mileageRate?: number; // cents per mile
+  utilityDeduction?: number; // cents
 }) {
   mockGetTotalIncome.mockReturnValue(opts.totalIncome);
   mockGetTotalWithholding.mockReturnValue(opts.fedWithholding ?? 0);
@@ -79,6 +86,7 @@ function setupMocks(opts: {
     ratePerMileTenths: rate * 10,
     monthlyBreakdown: [],
   });
+  mockGetUtilityDeduction.mockResolvedValue(opts.utilityDeduction ?? 0);
 }
 
 beforeEach(() => {
@@ -255,6 +263,36 @@ describe('estimateTaxLiability', () => {
       const seTaxBase = Math.round(43_300 * 0.9235);
       const seTax = Math.round(seTaxBase * 0.153);
       expect(result.selfEmploymentTax).toBe(seTax * 100);
+    });
+  });
+
+  describe('utility deduction', () => {
+    it('includes utility deduction in business deductions', async () => {
+      // $50,000 1099-NEC, $1,200 utility deduction (15% of $8,000 in utilities)
+      setupMocks({
+        totalIncome: 5_000_000,
+        incomeSummary: [{ formType: '1099-NEC', totalAmount: 5_000_000, count: 1 }],
+        utilityDeduction: 120_000,
+      });
+
+      const result = await estimateTaxLiability(2024);
+
+      expect(result.utilityDeduction).toBe(120_000);
+      // Net SE = $50,000 - $1,200 = $48,800
+      // SE tax base: $48,800 * 0.9235 = $45,066.8
+      const seTaxBase = Math.round(48_800 * 0.9235);
+      const seTax = Math.round(seTaxBase * 0.153);
+      expect(result.selfEmploymentTax).toBe(seTax * 100);
+    });
+
+    it('returns zero utility deduction when none set', async () => {
+      setupMocks({
+        totalIncome: 5_000_000,
+        incomeSummary: [{ formType: 'W-2', totalAmount: 5_000_000, count: 1 }],
+      });
+
+      const result = await estimateTaxLiability(2024);
+      expect(result.utilityDeduction).toBe(0);
     });
   });
 

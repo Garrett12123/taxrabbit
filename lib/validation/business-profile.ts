@@ -39,6 +39,7 @@ export const businessProfileSchema = z.object({
   accountingMethod: accountingMethodEnum.optional(),
   startDate: z.string().max(10).optional(),
   notes: z.string().max(1000).optional(),
+  homeOfficePercent: z.coerce.number().min(0).max(100).optional(),
 });
 
 export type BusinessProfileInput = z.infer<typeof businessProfileSchema>;
