@@ -1,13 +1,17 @@
 /**
  * Parses utility bill data pasted from provider websites.
  *
- * Supports two formats:
+ * Supports three formats:
  *
- * 1. Tabular (tab or multi-space separated):
+ * 1. CSV (comma-separated with headers):
+ *    Date Start,Date End,Category,Description,Amount
+ *    2024-12-10,2025-01-09,Internet,Internet Service,$80.24
+ *
+ * 2. Tabular (tab or multi-space separated):
  *    Bill Date    Usage    Consumption Charges    Other Charges    Total Charges
  *    Dec 01, 2025    2    $ 58.69    $ 1.67    $ 60.36
  *
- * 2. Block/vertical (each bill is a repeating group of lines):
+ * 3. Block/vertical (each bill is a repeating group of lines):
  *    ELECTRIC SERVICE — 150004001
  *    Auto Pay
  *    JOHN DOE
@@ -274,6 +278,92 @@ function parseBlockFormat(lines: string[]): ParseResult {
   return { rows, errors };
 }
 
+// ─── CSV format parser ────────────────────────────────────────
+// Handles comma-separated data with headers like:
+// Date Start,Date End,Category,Description,Amount
+
+/**
+ * Check if the input looks like CSV (comma-separated with date/amount headers).
+ */
+function isCsvFormat(lines: string[]): boolean {
+  if (lines.length < 2) return false;
+  const header = lines[0];
+  if (!header.includes(',')) return false;
+  const cols = header.split(',').map((c) => c.trim().toLowerCase());
+  return cols.some((c) => c.includes('date')) && cols.some((c) => c.includes('amount') || c.includes('total'));
+}
+
+type CsvColumnMap = {
+  date: number;
+  amount: number;
+};
+
+function detectCsvColumns(headerCols: string[]): CsvColumnMap | null {
+  let dateIdx = -1;
+  let amountIdx = -1;
+
+  for (let i = 0; i < headerCols.length; i++) {
+    const col = headerCols[i].toLowerCase();
+    // Prefer "date start" over other date columns for billing period start
+    if (col === 'date start' || col === 'date' || col === 'bill date') {
+      if (dateIdx === -1) dateIdx = i;
+    }
+    if (col === 'amount' || col === 'total' || col === 'total charges') {
+      amountIdx = i;
+    }
+  }
+
+  if (dateIdx === -1 || amountIdx === -1) return null;
+  return { date: dateIdx, amount: amountIdx };
+}
+
+function parseCsvFormat(lines: string[]): ParseResult {
+  const rows: ParsedUtilityRow[] = [];
+  const errors: string[] = [];
+
+  const headerCols = lines[0].split(',').map((c) => c.trim());
+  const colMap = detectCsvColumns(headerCols);
+
+  if (!colMap) {
+    return { rows: [], errors: ['CSV headers must include a date and amount column.'] };
+  }
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',').map((c) => c.trim());
+
+    if (cols.length <= Math.max(colMap.date, colMap.amount)) {
+      errors.push(`Row ${i + 1}: Not enough columns`);
+      continue;
+    }
+
+    const billDate = parseDate(cols[colMap.date]);
+    if (!billDate) {
+      errors.push(`Row ${i + 1}: Could not parse date "${cols[colMap.date]}"`);
+      continue;
+    }
+
+    const amount = parseMoney(cols[colMap.amount]);
+    if (amount === null) {
+      errors.push(`Row ${i + 1}: Could not parse amount "${cols[colMap.amount]}"`);
+      continue;
+    }
+
+    rows.push({
+      billDate,
+      usage: undefined,
+      consumptionCharges: 0,
+      otherCharges: 0,
+      amount,
+    });
+  }
+
+  if (rows.length === 0 && errors.length === 0) {
+    errors.push('No valid utility bill rows found in the CSV data.');
+  }
+
+  return { rows, errors };
+}
+
 // ─── Format detection ─────────────────────────────────────────
 
 /**
@@ -312,7 +402,11 @@ export function parseUtilityPaste(text: string): ParseResult {
     return { rows: [], errors: ['No data found in pasted text.'] };
   }
 
-  // Detect format
+  // Detect format — check CSV first, then block, then tabular
+  if (isCsvFormat(lines)) {
+    return parseCsvFormat(lines);
+  }
+
   if (isBlockFormat(lines)) {
     const result = parseBlockFormat(lines);
     if (result.rows.length === 0 && result.errors.length === 0) {

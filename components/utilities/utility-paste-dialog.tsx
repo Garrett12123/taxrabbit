@@ -177,7 +177,7 @@ export function UtilityPasteDialog({
                 <Textarea
                   value={rawText}
                   onChange={(e) => setRawText(e.target.value)}
-                  placeholder={"Paste rows from your utility provider's billing page...\n\nExample:\nBill Date\tUsage\tConsumption Charges\tOther Charges\tTotal Charges\nDec 01, 2025\t2\t$ 58.69\t$ 1.67\t$ 60.36"}
+                  placeholder={"Paste rows from your utility provider's billing page or CSV export...\n\nExamples:\nBill Date\tUsage\tConsumption Charges\tOther Charges\tTotal Charges\nDec 01, 2025\t2\t$ 58.69\t$ 1.67\t$ 60.36\n\nDate Start,Date End,Category,Description,Amount\n2025-01-10,2025-02-09,Internet,Internet Service,$80.24"}
                   rows={8}
                   className="font-mono text-xs"
                 />

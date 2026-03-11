@@ -16,27 +16,34 @@ TaxRabbit helps you organize your tax documents, track income and expenses, and 
 ### Key Features
 
 - **Fully Offline**: No internet connection required. Your data never leaves your machine.
-- **Encrypted at Rest**: All sensitive data encrypted using AES-256-GCM.
+- **Encrypted at Rest**: All sensitive data encrypted using AES-256-GCM with Argon2id key derivation.
 - **Personal + LLC Support**: Track both personal income and business expenses.
 - **Document Vault**: Store and link receipts, W-2s, 1099s, and other tax documents.
 - **Mileage Tracking**: Log business miles with IRS standard mileage rate deduction calculations.
-- **Tax Estimation**: Projected federal tax liability with SE tax, bracket calculations, and withholding.
-- **Quarterly Payments**: Track estimated tax payments by quarter.
+- **Utility Bill Tracking**: Track utility costs with home office percentage deduction calculations.
+- **Tax Estimation**: Projected federal tax liability with SE tax, Additional Medicare Tax, bracket calculations, and withholding.
+- **Quarterly Payments**: Track estimated tax payments by quarter with payment confirmation tracking.
+- **Smart Paste**: Paste data from W-2/1099 PDFs and utility provider websites — fields are auto-extracted and matched.
+- **Bulk CSV Import**: Import expenses and mileage from bank/app CSV exports with auto-column detection.
+- **CPA Export Packet**: Professional export with styled PDF summary, multi-sheet XLSX workbook, DOCX cover letter, raw CSVs, and document attachments.
+- **Backup & Restore**: Full encrypted vault backup with integrity validation and one-click restore.
 - **Year-by-Year Organization**: Separate your finances by tax year.
 - **Filing Checklist**: Track preparation progress for each tax year.
-- **CPA-Ready Exports**: Generate summary reports and document packages.
+- **Auto-Lock**: Configurable session timeout with automatic vault locking.
+- **Recovery Key**: Device-bound recovery key for vault access if Keychain is lost.
 - **Theme Support**: 10 color themes with light/dark mode and system preference detection.
 
 ### What You Can Track
 
-| Income | Expenses | Mileage & Payments | Documents |
-|--------|----------|--------------------|-----------|
-| W-2 (wages) | Personal expenses | Business miles driven | PDF receipts |
-| 1099-NEC (contract) | LLC/business expenses | IRS mileage deductions | Tax form scans |
-| 1099-INT (interest) | Categorized spending | Quarterly estimated payments | Supporting documents |
-| 1099-DIV (dividends) | Vendor tracking | Filing checklist | Linked attachments |
-| 1099-MISC | Receipt attachments | | |
-| 1099-K (gig/marketplace) | | | |
+| Income | Expenses | Utilities | Mileage & Payments | Documents |
+|--------|----------|-----------|-------------------|-----------|
+| W-2 (wages) | Personal expenses | Electric | Business miles driven | PDF receipts |
+| 1099-NEC (contract) | LLC/business expenses | Water | IRS mileage deductions | Tax form scans |
+| 1099-INT (interest) | Categorized spending | Gas | Quarterly estimated payments | Supporting documents |
+| 1099-DIV (dividends) | Vendor tracking | Internet | Filing checklist | Linked attachments |
+| 1099-MISC | Receipt attachments | Trash | | |
+| 1099-K (gig/marketplace) | | Other | | |
+| Other (custom) | | | | |
 
 ### CPA-Ready Data Capture
 
@@ -46,6 +53,38 @@ Income forms capture all fields a CPA would need:
 - **W-2 Complete**: All boxes including tips (7, 8), benefits (10, 11), Box 12 codes, Box 13 checkboxes, and state/local
 - **1099 Forms**: Account numbers, federal/state income and withholding
 - **Control Numbers**: W-2 Box d and 1099 account numbers for record matching
+- **Smart Paste**: Paste raw text from a PDF and fields are auto-extracted using token matching
+
+### CPA Export Packet
+
+Generate a professional, Google Drive-ready export package:
+
+```
+TaxRabbit CPA Packet - 2025/
+├── Tax Summary 2025.pdf          # Multi-page PDF with cover page, tables, and tax estimate
+├── Financial Data 2025.xlsx      # Styled workbook: Summary, Income, Expenses, Mileage, Utilities, Payments, Tax Estimate
+├── Cover Letter 2025.docx        # Taxpayer info, financial summary, packet contents, security notice
+├── data/                         # Raw CSVs for import into tax preparation software
+│   ├── income.csv
+│   ├── expenses.csv
+│   ├── mileage.csv
+│   ├── utility-bills.csv
+│   └── estimated-payments.csv
+└── documents/                    # Decrypted document attachments (optional)
+    ├── income/
+    ├── expenses/
+    └── other/
+```
+
+- **PDF**: Branded cover page, KPI boxes, styled tables with alternating rows, tax estimate breakdown, page numbers
+- **XLSX**: 7 sheets with green-branded headers, currency formatting, auto-filters, totals, alternating stripes — opens natively in Google Sheets
+- **DOCX**: Professional cover letter with key-value tables — opens natively in Google Docs
+
+### Import & Paste Options
+
+- **CSV Import**: Import expenses and mileage from bank statements or app exports. Auto-detects column mappings with manual override.
+- **Utility Quick Paste**: Paste billing data from provider websites (tab-separated, block format, or CSV with headers like `Date Start,Date End,Amount`).
+- **Smart Paste for Income**: Paste raw text from W-2/1099 PDFs — tokens are extracted and matched to form fields automatically.
 
 ## Security Model
 
@@ -73,9 +112,13 @@ flowchart TB
 ```
 
 - **Master Password**: Only you know it. Never stored.
-- **Key Encryption Key (KEK)**: Derived from your password using Argon2id.
+- **Key Encryption Key (KEK)**: Derived from your password using Argon2id (with scrypt fallback).
 - **Data Encryption Key (DEK)**: Random key that encrypts your data, wrapped by KEK.
-- **Device Key**: Additional protection stored in macOS Keychain.
+- **Device Key**: Additional protection stored in macOS Keychain (native only, not available in Docker).
+- **Recovery Key**: Generated when device key is enabled — allows vault recovery if Keychain is lost.
+- **Auto-Lock**: Configurable session timeout (default 30 min) clears the DEK from memory.
+- **Rate Limiting**: Failed unlock attempts are rate-limited with exponential backoff.
+- **Audit Logging**: Security events (unlock, lock, setup, failed attempts) are logged to `data/audit.log`.
 
 ## Getting Started
 
@@ -196,6 +239,7 @@ taxrabbit/
 │   │   ├── imports/          # CSV import wizard
 │   │   ├── llc/              # LLC business profile
 │   │   ├── checklist/        # Filing preparation checklist
+│   │   ├── utilities/        # Utility bill tracking
 │   │   ├── reports/          # Exports and backups
 │   │   ├── search/           # Global search
 │   │   └── settings/         # App configuration
@@ -209,6 +253,7 @@ taxrabbit/
 │   ├── forms/                # Income form components
 │   ├── expenses/             # Expense components
 │   ├── mileage/              # Mileage tracking components
+│   ├── utilities/            # Utility bill components
 │   ├── estimated-payments/   # Quarterly payment components
 │   ├── documents/            # Document components
 │   ├── imports/              # CSV import components
@@ -238,7 +283,10 @@ taxrabbit/
 │   ├── types/                # TypeScript type definitions
 │   ├── validation/           # Zod schemas
 │   ├── csv/                  # CSV parsing & generation
+│   ├── export/               # PDF, XLSX, DOCX generators
 │   ├── html/                 # HTML report templates
+│   ├── smart-paste/          # Token extraction for W-2/1099 paste
+│   ├── utility-paste/        # Utility bill paste parser
 │   ├── audit.ts              # Data audit utilities
 │   ├── completeness.ts       # Form completeness scoring
 │   ├── themes.ts             # Color theme definitions
@@ -285,6 +333,10 @@ sequenceDiagram
 | Encryption | AES-256-GCM, Argon2id |
 | Keychain | @napi-rs/keyring |
 | Charts | Recharts |
+| PDF Export | PDFKit |
+| Spreadsheet Export | ExcelJS |
+| Document Export | docx |
+| Archive | Archiver + AdmZip |
 | Testing | Vitest |
 | Validation | Zod v4 |
 
@@ -307,15 +359,19 @@ All data is stored locally in the project's `data/` directory:
 
 ```
 data/
-├── taxrabbit.db      # SQLite database
-└── vault.json        # Vault configuration
+├── taxrabbit.db       # SQLite database (WAL mode)
+├── vault.json         # Vault configuration & wrapped DEK
+├── audit.log          # Security event log
+└── vault/             # Encrypted document blobs (Docker)
+    ├── [uuid-1]
+    └── ...
 ```
 
-Document files are stored in:
+On native macOS, document files are stored separately:
 
 ```
 ~/Library/Application Support/taxrabbit/vault/
-├── [uuid-1]          # Encrypted document blob
+├── [uuid-1]           # Encrypted document blob
 ├── [uuid-2]
 └── ...
 ```
@@ -338,7 +394,10 @@ Access the theme switcher via the sidebar.
 - **No Analytics**: Zero telemetry or tracking
 - **No External Calls**: Runtime network requests are blocked via offline guard
 - **Encrypted Storage**: All sensitive fields encrypted with AES-256-GCM
-- **Your Data, Your Control**: Export or delete anytime
+- **Session Security**: DEK held in memory only while unlocked, auto-cleared on timeout
+- **Rate-Limited Auth**: Failed unlock attempts trigger exponential backoff
+- **Audit Trail**: Security events logged locally for review
+- **Your Data, Your Control**: Full backup/restore, CPA export, or delete anytime
 
 ## Disclaimer
 

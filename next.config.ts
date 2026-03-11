@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
-  serverExternalPackages: ['argon2', '@napi-rs/keyring', 'better-sqlite3', 'archiver', 'adm-zip'],
+  serverExternalPackages: ['argon2', '@napi-rs/keyring', 'better-sqlite3', 'archiver', 'adm-zip', 'pdfkit', 'exceljs'],
   experimental: {
     serverActions: {
       bodySizeLimit: '50mb',

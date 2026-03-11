@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ThemeSwitcher } from '@/components/layout/theme-switcher';
 import { EnvironmentInfoPanel } from '@/components/layout/environment-info';
+import { DbStatsPanel } from '@/components/layout/db-stats-panel';
 import { NAV_ITEMS } from '@/lib/constants';
 import { lockAction } from '@/app/(auth)/actions';
 import { cn } from '@/lib/utils';
@@ -108,6 +109,7 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-3 space-y-1">
         <EnvironmentInfoPanel />
+        <DbStatsPanel />
         <ThemeSwitcher />
         <form action={lockAction}>
           <Button

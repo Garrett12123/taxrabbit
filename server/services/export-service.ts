@@ -5,8 +5,9 @@ import { extname } from 'node:path';
 
 import { objectsToCSV } from '@/lib/csv/generate';
 import { formatCents } from '@/lib/utils';
-import { generateSummaryHTML, type SummaryData } from '@/lib/html/summary-template';
-import { generateTaxEstimateHTML } from '@/lib/html/tax-estimate-template';
+import { generateXlsx } from '@/lib/export/xlsx-generator';
+import { generatePdf } from '@/lib/export/pdf-generator';
+import { generateDocx } from '@/lib/export/docx-generator';
 import { listExpensesByYear, type ExpenseDecrypted } from '@/server/db/dal/expenses';
 import { listIncomeDocumentsByYear, type IncomeDocumentDecrypted } from '@/server/db/dal/income-documents';
 import { listMileageLogsByYear, type MileageLogDecrypted } from '@/server/db/dal/mileage-logs';
@@ -248,80 +249,6 @@ export function generateBusinessProfileText(profile: BusinessProfileDecrypted | 
   return lines.join('\n') + '\n';
 }
 
-function generateReadme(
-  year: number,
-  summaryData: SummaryData,
-  opts: { includeDocuments: boolean; documentCount: number; skippedDocCount: number }
-): string {
-  const lines: string[] = [];
-  lines.push('TaxRabbit CPA Packet');
-  lines.push('='.repeat(40));
-  lines.push(`Tax Year: ${year}`);
-  lines.push(`Generated: ${new Date().toISOString()}`);
-  lines.push('');
-  lines.push('CONTENTS');
-  lines.push('-'.repeat(40));
-  lines.push('');
-  lines.push('summary-report.html    Year-end summary (open in browser, printable)');
-  lines.push('tax-estimate.html      Federal tax estimate breakdown (open in browser, printable)');
-  lines.push('');
-  lines.push('data/');
-  lines.push('  income.csv           Income forms (W-2, 1099, etc.)');
-  lines.push('  expenses.csv         All business and personal expenses');
-  lines.push('  mileage.csv          Business mileage logs');
-  lines.push('  utility-bills.csv    Utility bills');
-  lines.push('  estimated-payments.csv  Estimated tax payments');
-  lines.push('');
-  lines.push('profiles/');
-  lines.push('  taxpayer-info.txt    Taxpayer personal information');
-  lines.push('  business-info.txt    Business profile and settings');
-
-  if (opts.includeDocuments) {
-    lines.push('');
-    lines.push('documents/');
-    lines.push('  income/              Documents linked to income forms');
-    lines.push('  expenses/            Documents linked to expenses');
-    lines.push('  other/               Unlinked documents');
-    lines.push(`  (${opts.documentCount} file(s) included)`);
-    if (opts.skippedDocCount > 0) {
-      lines.push(`  (${opts.skippedDocCount} file(s) could not be read and were skipped)`);
-    }
-  }
-
-  lines.push('');
-  lines.push('SUMMARY');
-  lines.push('-'.repeat(40));
-  lines.push(`Total Income:       ${fmtDollarsPlain(summaryData.income.total)}`);
-  lines.push(`Total Withholding:  ${fmtDollarsPlain(summaryData.income.totalWithholding)}`);
-  lines.push(`Total Expenses:     ${fmtDollarsPlain(summaryData.expenses.totalAll)}`);
-  lines.push(`Business Expenses:  ${fmtDollarsPlain(summaryData.expenses.totalBusiness)}`);
-
-  if (summaryData.mileage && summaryData.mileage.totalTrips > 0) {
-    lines.push(`Mileage Deduction:  ${fmtDollarsPlain(summaryData.mileage.totalDeduction)}`);
-    lines.push(`Total Miles:        ${(summaryData.mileage.totalMiles / 100).toFixed(1)}`);
-  }
-
-  if (summaryData.utilityBills && summaryData.utilityBills.byType.length > 0) {
-    lines.push(`Utility Costs:      ${fmtDollarsPlain(summaryData.utilityBills.totalCost)}`);
-    lines.push(`Utility Deduction:  ${fmtDollarsPlain(summaryData.utilityBills.businessDeduction)}`);
-  }
-
-  lines.push('');
-  lines.push('SECURITY NOTICE');
-  lines.push('-'.repeat(40));
-  lines.push('This packet may contain sensitive personal and financial information.');
-  if (opts.includeDocuments) {
-    lines.push('Attached documents have been decrypted from the TaxRabbit vault.');
-  }
-  lines.push('Store this file securely and delete it after sharing with your CPA.');
-  lines.push('');
-
-  return lines.join('\n');
-}
-
-function fmtDollarsPlain(cents: number): string {
-  return formatCents(cents);
-}
 
 // ─── CPA Packet Export ────────────────────────────────────────────
 
@@ -344,49 +271,78 @@ export async function generateCPAPacket(
     archive.on('error', reject);
   });
 
-  const prefix = `taxrabbit-cpa-packet-${year}`;
+  const prefix = `TaxRabbit CPA Packet - ${year}`;
 
   // 1. Parallel fetch all data
   const [
-    expensesCsv,
-    incomeCsv,
-    mileageCsv,
-    utilityBillsCsv,
-    estimatedPaymentsCsv,
+    expenses,
+    income,
+    mileage,
+    utilities,
+    estimatedPayments,
     summaryData,
     taxEstimate,
     personProfiles,
     businessProfile,
   ] = await Promise.all([
-    exportExpensesCsv(year),
-    exportIncomeCsv(year),
-    exportMileageCsv(year),
-    exportUtilityBillsCsv(year),
-    exportEstimatedPaymentsCsv(year),
+    listExpensesByYear(year),
+    listIncomeDocumentsByYear(year),
+    listMileageLogsByYear(year),
+    listUtilityBillsByYear(year),
+    listEstimatedPaymentsByYear(year),
     getYearEndSummary(year),
     estimateTaxLiability(year),
     listPersonProfilesByYear(year),
     getBusinessProfileForYear(year),
   ]);
 
-  // 2. Data CSVs
-  archive.append(expensesCsv, { name: `${prefix}/data/expenses.csv` });
-  archive.append(incomeCsv, { name: `${prefix}/data/income.csv` });
-  archive.append(mileageCsv, { name: `${prefix}/data/mileage.csv` });
-  archive.append(utilityBillsCsv, { name: `${prefix}/data/utility-bills.csv` });
-  archive.append(estimatedPaymentsCsv, { name: `${prefix}/data/estimated-payments.csv` });
+  // 2. Generate formatted files in parallel
+  const [xlsxBuffer, pdfBuffer, docxBuffer] = await Promise.all([
+    generateXlsx({
+      year,
+      summary: summaryData,
+      taxEstimate,
+      expenses,
+      income,
+      mileage,
+      utilities,
+      estimatedPayments,
+    }),
+    generatePdf({
+      year,
+      summary: summaryData,
+      taxEstimate,
+      personProfiles,
+      businessProfile,
+    }),
+    generateDocx({
+      year,
+      summary: summaryData,
+      taxEstimate,
+      personProfiles,
+      businessProfile,
+      includeDocuments,
+      documentCount: 0, // updated below if documents included
+    }),
+  ]);
 
-  // 3. HTML reports
-  const summaryHtml = generateSummaryHTML(summaryData);
-  const taxEstimateHtml = generateTaxEstimateHTML(year, taxEstimate);
-  archive.append(summaryHtml, { name: `${prefix}/summary-report.html` });
-  archive.append(taxEstimateHtml, { name: `${prefix}/tax-estimate.html` });
+  // 3. Main formatted files
+  archive.append(pdfBuffer, { name: `${prefix}/Tax Summary ${year}.pdf` });
+  archive.append(xlsxBuffer, { name: `${prefix}/Financial Data ${year}.xlsx` });
 
-  // 4. Profiles
-  const taxpayerText = generatePersonProfileText(personProfiles);
-  const businessText = generateBusinessProfileText(businessProfile);
-  archive.append(taxpayerText, { name: `${prefix}/profiles/taxpayer-info.txt` });
-  archive.append(businessText, { name: `${prefix}/profiles/business-info.txt` });
+  // 4. Raw CSVs (for CPA software import)
+  const [expCsv, incCsv, milCsv, utlCsv, estCsv] = await Promise.all([
+    exportExpensesCsv(year),
+    exportIncomeCsv(year),
+    exportMileageCsv(year),
+    exportUtilityBillsCsv(year),
+    exportEstimatedPaymentsCsv(year),
+  ]);
+  archive.append(expCsv, { name: `${prefix}/data/expenses.csv` });
+  archive.append(incCsv, { name: `${prefix}/data/income.csv` });
+  archive.append(milCsv, { name: `${prefix}/data/mileage.csv` });
+  archive.append(utlCsv, { name: `${prefix}/data/utility-bills.csv` });
+  archive.append(estCsv, { name: `${prefix}/data/estimated-payments.csv` });
 
   // 5. Documents (when checkbox is checked)
   let documentCount = 0;
@@ -399,17 +355,14 @@ export async function generateCPAPacket(
       listIncomeDocumentsByYear(year),
     ]);
 
-    // Build a map from income doc ID -> labeling info
     const incomeDocMap = new Map<string, IncomeDocumentDecrypted>();
     for (const doc of incomeDocs) {
       incomeDocMap.set(doc.id, doc);
     }
 
-    // Track used filenames per folder for deduplication
     const usedNames = new Map<string, Set<string>>();
 
     for (const doc of allDocs) {
-      // Determine folder based on linkedEntityType
       let folder: string;
       let filePrefix = '';
       if (doc.linkedEntityType === 'income' && doc.linkedEntityId) {
@@ -428,12 +381,10 @@ export async function generateCPAPacket(
       const originalFilename = doc.payload?.originalFilename ?? `document-${doc.id}`;
       let filename = filePrefix + sanitizeFilename(originalFilename);
 
-      // Ensure extension is preserved
       if (!extname(filename) && extname(originalFilename)) {
         filename += extname(originalFilename);
       }
 
-      // Deduplicate within folder
       if (!usedNames.has(folder)) {
         usedNames.set(folder, new Set());
       }
@@ -456,13 +407,19 @@ export async function generateCPAPacket(
     }
   }
 
-  // 6. README
-  const readme = generateReadme(year, summaryData, {
-    includeDocuments,
-    documentCount,
-    skippedDocCount,
-  });
-  archive.append(readme, { name: `${prefix}/README.txt` });
+  // 6. Re-generate DOCX with actual document count, then add cover letter
+  const finalDocx = documentCount > 0
+    ? await generateDocx({
+        year,
+        summary: summaryData,
+        taxEstimate,
+        personProfiles,
+        businessProfile,
+        includeDocuments,
+        documentCount,
+      })
+    : docxBuffer;
+  archive.append(finalDocx, { name: `${prefix}/Cover Letter ${year}.docx` });
 
   // 7. Finalize
   archive.finalize();

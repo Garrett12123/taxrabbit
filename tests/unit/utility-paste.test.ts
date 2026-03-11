@@ -323,6 +323,80 @@ View Bil`;
     });
   });
 
+  describe('CSV format (comma-separated)', () => {
+    it('parses internet bill CSV with Date Start, Date End, Amount', () => {
+      const text = `Date Start,Date End,Category,Description,Amount
+2024-12-10,2025-01-09,Internet,Internet Service,$80.24
+2025-01-10,2025-02-09,Internet,Internet Service,$80.24
+2025-02-10,2025-03-09,Internet,Internet Service,$80.24`;
+
+      const result = parseUtilityPaste(text);
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.rows).toHaveLength(3);
+
+      // Uses Date Start as the bill date
+      expect(result.rows[0].billDate).toBe('2024-12-10');
+      expect(result.rows[0].amount).toBe(8024);
+      expect(result.rows[1].billDate).toBe('2025-01-10');
+      expect(result.rows[1].amount).toBe(8024);
+      expect(result.rows[2].billDate).toBe('2025-02-10');
+      expect(result.rows[2].amount).toBe(8024);
+    });
+
+    it('parses full 12-month internet bill CSV', () => {
+      const text = `Date Start,Date End,Category,Description,Amount
+2024-12-10,2025-01-09,Internet,Internet Service,$80.24
+2025-01-10,2025-02-09,Internet,Internet Service,$80.24
+2025-02-10,2025-03-09,Internet,Internet Service,$80.24
+2025-03-10,2025-04-09,Internet,Internet Service,$80.24
+2025-04-10,2025-05-09,Internet,Internet Service,$80.24
+2025-05-10,2025-06-09,Internet,Internet Service,$80.24
+2025-06-10,2025-07-09,Internet,Internet Service,$80.24
+2025-07-10,2025-08-09,Internet,Internet Service,$80.24
+2025-08-10,2025-09-09,Internet,Internet Service,$80.24
+2025-09-10,2025-10-09,Internet,Internet Service,$90.23
+2025-10-10,2025-11-09,Internet,Internet Service,$70.87
+2025-11-10,2025-12-09,Internet,Internet Service,$80.23`;
+
+      const result = parseUtilityPaste(text);
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.rows).toHaveLength(12);
+
+      // Verify varying amounts
+      expect(result.rows[9].amount).toBe(9023); // $90.23
+      expect(result.rows[10].amount).toBe(7087); // $70.87
+
+      const total = result.rows.reduce((s, r) => s + r.amount, 0);
+      expect(total).toBe(96349);
+    });
+
+    it('handles CSV with simple Date and Amount headers', () => {
+      const text = `Date,Amount
+2025-06-15,$125.00
+2025-07-15,$130.50`;
+
+      const result = parseUtilityPaste(text);
+
+      expect(result.errors).toHaveLength(0);
+      expect(result.rows).toHaveLength(2);
+      expect(result.rows[0].billDate).toBe('2025-06-15');
+      expect(result.rows[0].amount).toBe(12500);
+      expect(result.rows[1].amount).toBe(13050);
+    });
+
+    it('returns error for CSV with missing amount column', () => {
+      const text = `Date Start,Date End,Category,Description
+2025-01-10,2025-02-09,Internet,Internet Service`;
+
+      const result = parseUtilityPaste(text);
+
+      expect(result.rows).toHaveLength(0);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('edge cases', () => {
     it('returns error for empty input', () => {
       const result = parseUtilityPaste('');
