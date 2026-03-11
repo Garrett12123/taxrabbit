@@ -51,11 +51,7 @@ export async function generateDocx(data: DocxData): Promise<Buffer> {
   // ─── Header / Title ─────────────────────────────────────────
   children.push(
     new Paragraph({
-      children: [new TextRun({ text: 'TaxRabbit', bold: true, size: 36, color: BRAND })],
-      spacing: { after: 100 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: `Tax Year ${data.year} — CPA Packet Cover Letter`, size: 24, color: '333333' })],
+      children: [new TextRun({ text: `Tax Year ${data.year} — Overview`, bold: true, size: 28, color: BRAND })],
       spacing: { after: 60 },
     }),
     new Paragraph({
@@ -112,9 +108,14 @@ export async function generateDocx(data: DocxData): Promise<Buffer> {
   const summaryRows: [string, string][] = [
     ['Total Income', fmtDollars(data.summary.income.total)],
     ['Federal Withholding', fmtDollars(data.summary.income.totalWithholding)],
-    ['Total Expenses', fmtDollars(data.summary.expenses.totalAll)],
-    ['Business Expenses', fmtDollars(data.summary.expenses.totalBusiness)],
   ];
+
+  if (data.summary.expenses.totalAll > 0) {
+    summaryRows.push(
+      ['Total Expenses', fmtDollars(data.summary.expenses.totalAll)],
+      ['Business Expenses', fmtDollars(data.summary.expenses.totalBusiness)],
+    );
+  }
 
   if (data.summary.mileage && data.summary.mileage.totalTrips > 0) {
     summaryRows.push(
@@ -177,16 +178,16 @@ export async function generateDocx(data: DocxData): Promise<Buffer> {
   children.push(spacer());
 
   // ─── Packet Contents ────────────────────────────────────────
-  children.push(heading('Packet Contents'));
+  children.push(heading('Included Files'));
 
   const contents: string[] = [
-    'Tax Summary Report.pdf — Complete financial summary with charts and tables',
-    'Financial Data.xlsx — Styled spreadsheet with all financial data (Income, Expenses, Mileage, Utilities, Payments)',
-    'Cover Letter.docx — This document',
-    'data/ — Raw CSV files for import into tax software',
+    'Tax Summary.pdf — Financial summary with tables and tax estimate',
+    'Financial Data.xlsx — Spreadsheet with all financial data',
+    'Overview.docx — This document',
+    'data/ — Raw CSV files for software import',
   ];
   if (data.includeDocuments) {
-    contents.push(`documents/ — ${data.documentCount} decrypted document(s) organized by type`);
+    contents.push(`documents/ — ${data.documentCount} document(s) organized by type`);
   }
 
   for (const item of contents) {
@@ -200,23 +201,17 @@ export async function generateDocx(data: DocxData): Promise<Buffer> {
   }
   children.push(spacer());
 
-  // ─── Security Notice ────────────────────────────────────────
-  children.push(heading('Security Notice'));
+  // ─── Notice ─────────────────────────────────────────────────
+  children.push(heading('Notice'));
   children.push(
     new Paragraph({
       children: [
         new TextRun({
-          text: 'This packet may contain sensitive personal and financial information. ',
+          text: 'This document contains sensitive personal and financial information. ',
           size: 20,
         }),
         new TextRun({
-          text: data.includeDocuments
-            ? 'Attached documents have been decrypted from the TaxRabbit vault. '
-            : '',
-          size: 20,
-        }),
-        new TextRun({
-          text: 'Store this file securely and delete it after sharing with your CPA.',
+          text: 'Store securely and share only with authorized parties.',
           size: 20,
           bold: true,
         }),
@@ -230,8 +225,7 @@ export async function generateDocx(data: DocxData): Promise<Buffer> {
     new Paragraph({
       children: [
         new TextRun({
-          text: 'Disclaimer: This summary is generated for organizational purposes only and does not constitute tax advice. '
-            + 'Consult a qualified tax professional for tax preparation and filing guidance.',
+          text: 'This summary is for organizational purposes only and does not constitute tax advice.',
           size: 16,
           color: GRAY,
           italics: true,
@@ -256,7 +250,7 @@ export async function generateDocx(data: DocxData): Promise<Buffer> {
               new Paragraph({
                 alignment: AlignmentType.CENTER,
                 children: [
-                  new TextRun({ text: 'TaxRabbit CPA Packet — ', size: 14, color: GRAY }),
+                  new TextRun({ text: `Tax Year ${data.year} — `, size: 14, color: GRAY }),
                   new TextRun({
                     children: ['Page ', PageNumber.CURRENT, ' of ', PageNumber.TOTAL_PAGES],
                     size: 14,

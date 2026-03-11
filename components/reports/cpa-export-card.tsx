@@ -43,14 +43,14 @@ export function CPAExportCard({ year }: Props) {
       a.href = url;
       a.download =
         res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ??
-        `CPA-Packet-${year}.zip`;
+        `tax-records-${year}.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('CPA export failed:', err);
-      toast.error(err instanceof Error ? err.message : 'CPA export failed. Please try again.');
+      console.error('Export failed:', err);
+      toast.error(err instanceof Error ? err.message : 'Export failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -59,11 +59,10 @@ export function CPAExportCard({ year }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>CPA Packet Export</CardTitle>
+        <CardTitle>Export Tax Records</CardTitle>
         <CardDescription>
-          Generate a comprehensive ZIP with all income, expenses, mileage,
-          utility bills, estimated payments, tax estimate, profiles, and HTML
-          reports for your tax preparer.
+          Generate a ZIP with PDF summary, styled spreadsheet, overview document,
+          raw CSVs, and optionally your uploaded documents.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -82,8 +81,7 @@ export function CPAExportCard({ year }: Props) {
             <AlertTitle>Security Notice</AlertTitle>
             <AlertDescription>
               Exported documents will be decrypted and included as plain files.
-              Store the export securely and delete it after sharing with your
-              CPA.
+              Store the export securely and delete after sharing.
             </AlertDescription>
           </Alert>
         )}
@@ -94,7 +92,7 @@ export function CPAExportCard({ year }: Props) {
           ) : (
             <Download className="size-4" />
           )}
-          {loading ? 'Generating...' : 'Generate CPA Packet'}
+          {loading ? 'Generating...' : 'Export Tax Records'}
         </Button>
       </CardContent>
     </Card>

@@ -103,15 +103,14 @@ export type XlsxData = {
 
 export async function generateXlsx(data: XlsxData): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'TaxRabbit';
   wb.created = new Date();
 
   buildSummarySheet(wb, data);
-  buildIncomeSheet(wb, data.income);
-  buildExpensesSheet(wb, data.expenses);
-  buildMileageSheet(wb, data.mileage);
-  buildUtilitiesSheet(wb, data.utilities);
-  buildEstPaymentsSheet(wb, data.estimatedPayments);
+  if (data.income.length > 0) buildIncomeSheet(wb, data.income);
+  if (data.expenses.length > 0) buildExpensesSheet(wb, data.expenses);
+  if (data.mileage.length > 0) buildMileageSheet(wb, data.mileage);
+  if (data.utilities.length > 0) buildUtilitiesSheet(wb, data.utilities);
+  if (data.estimatedPayments.length > 0) buildEstPaymentsSheet(wb, data.estimatedPayments);
   buildTaxEstimateSheet(wb, data.taxEstimate, data.year);
 
   const arrayBuffer = await wb.xlsx.writeBuffer();
@@ -126,7 +125,7 @@ function buildSummarySheet(wb: ExcelJS.Workbook, data: XlsxData) {
   // Title
   ws.mergeCells('A1:D1');
   const titleCell = ws.getCell('A1');
-  titleCell.value = `TaxRabbit — Tax Year ${data.year} Summary`;
+  titleCell.value = `Tax Year ${data.year} Summary`;
   titleCell.font = { bold: true, size: 16, color: { argb: BRAND_COLOR } };
   titleCell.alignment = { vertical: 'middle' };
   ws.getRow(1).height = 30;

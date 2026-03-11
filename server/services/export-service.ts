@@ -271,7 +271,7 @@ export async function generateCPAPacket(
     archive.on('error', reject);
   });
 
-  const prefix = `TaxRabbit CPA Packet - ${year}`;
+  const prefix = `Tax Records - ${year}`;
 
   // 1. Parallel fetch all data
   const [
@@ -330,19 +330,22 @@ export async function generateCPAPacket(
   archive.append(pdfBuffer, { name: `${prefix}/Tax Summary ${year}.pdf` });
   archive.append(xlsxBuffer, { name: `${prefix}/Financial Data ${year}.xlsx` });
 
-  // 4. Raw CSVs (for CPA software import)
-  const [expCsv, incCsv, milCsv, utlCsv, estCsv] = await Promise.all([
-    exportExpensesCsv(year),
-    exportIncomeCsv(year),
-    exportMileageCsv(year),
-    exportUtilityBillsCsv(year),
-    exportEstimatedPaymentsCsv(year),
-  ]);
-  archive.append(expCsv, { name: `${prefix}/data/expenses.csv` });
-  archive.append(incCsv, { name: `${prefix}/data/income.csv` });
-  archive.append(milCsv, { name: `${prefix}/data/mileage.csv` });
-  archive.append(utlCsv, { name: `${prefix}/data/utility-bills.csv` });
-  archive.append(estCsv, { name: `${prefix}/data/estimated-payments.csv` });
+  // 4. Raw CSVs — only include sections that have data
+  if (expenses.length > 0) {
+    archive.append(await exportExpensesCsv(year), { name: `${prefix}/data/expenses.csv` });
+  }
+  if (income.length > 0) {
+    archive.append(await exportIncomeCsv(year), { name: `${prefix}/data/income.csv` });
+  }
+  if (mileage.length > 0) {
+    archive.append(await exportMileageCsv(year), { name: `${prefix}/data/mileage.csv` });
+  }
+  if (utilities.length > 0) {
+    archive.append(await exportUtilityBillsCsv(year), { name: `${prefix}/data/utility-bills.csv` });
+  }
+  if (estimatedPayments.length > 0) {
+    archive.append(await exportEstimatedPaymentsCsv(year), { name: `${prefix}/data/estimated-payments.csv` });
+  }
 
   // 5. Documents (when checkbox is checked)
   let documentCount = 0;
@@ -418,13 +421,13 @@ export async function generateCPAPacket(
         documentCount,
       })
     : docxBuffer;
-  archive.append(finalDocx, { name: `${prefix}/Cover Letter ${year}.docx` });
+  archive.append(finalDocx, { name: `${prefix}/Overview ${year}.docx` });
 
   // 7. Finalize
   archive.finalize();
 
   const buffer = await archivePromise;
-  const filename = `taxrabbit-cpa-packet-${year}.zip`;
+  const filename = `tax-records-${year}.zip`;
 
   return { buffer, filename };
 }

@@ -39,9 +39,7 @@ export function generatePdf(data: PdfData): Promise<Buffer> {
       size: 'LETTER',
       margins: { top: PAGE_MARGIN, bottom: PAGE_MARGIN, left: PAGE_MARGIN, right: PAGE_MARGIN },
       info: {
-        Title: `TaxRabbit — Tax Year ${data.year} Summary`,
-        Author: 'TaxRabbit',
-        Creator: 'TaxRabbit',
+        Title: `Tax Year ${data.year} Summary`,
       },
       bufferPages: true,
     });
@@ -54,10 +52,9 @@ export function generatePdf(data: PdfData): Promise<Buffer> {
     const pageWidth = doc.page.width - PAGE_MARGIN * 2;
 
     // ─── Cover page ───────────────────────────────────────────
-    doc.fontSize(28).fillColor(BRAND).text('TaxRabbit', { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(18).fillColor('#333333').text(`Tax Year ${data.year}`, { align: 'center' });
-    doc.fontSize(12).fillColor(GRAY).text('CPA Summary Report', { align: 'center' });
+    doc.fontSize(22).fillColor(BRAND).text(`Tax Year ${data.year}`, { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(13).fillColor('#333333').text('Financial Summary', { align: 'center' });
     doc.moveDown(1);
     doc.fontSize(10).fillColor(GRAY).text(`Generated ${data.summary.generatedAt}`, { align: 'center' });
 
@@ -255,8 +252,7 @@ export function generatePdf(data: PdfData): Promise<Buffer> {
     // Disclaimer
     doc.moveDown(2);
     doc.fontSize(8).fillColor(GRAY).text(
-      'Disclaimer: This tax estimate is generated for informational purposes only and does not constitute tax advice. ' +
-      'Actual tax liability may differ. Consult a qualified tax professional for tax preparation and filing guidance.',
+      'This estimate is for informational purposes only and does not constitute tax advice. Actual tax liability may differ.',
       { width: pageWidth }
     );
 
@@ -351,6 +347,7 @@ function drawTable(
     );
   }
   y += rowHeight;
+  doc.y = y; // sync internal cursor after header
 
   // Data rows
   for (let r = 0; r < rows.length; r++) {
