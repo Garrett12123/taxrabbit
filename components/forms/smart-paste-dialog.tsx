@@ -61,6 +61,16 @@ export function SmartPasteDialog({
     setStep('review');
   }, [rawText, formType]);
 
+  const handleClose = useCallback(() => {
+    setStep('paste');
+    setRawText('');
+    setResult(null);
+    setEditedMatches([]);
+    setIssuerName('');
+    setIssuerEin('');
+    onOpenChange(false);
+  }, [onOpenChange]);
+
   const handleApply = useCallback(() => {
     if (!result) return;
 
@@ -78,17 +88,7 @@ export function SmartPasteDialog({
       issuerEin: issuerEin || undefined,
     });
     handleClose();
-  }, [result, editedMatches, issuerName, issuerEin, onApply]);
-
-  const handleClose = useCallback(() => {
-    setStep('paste');
-    setRawText('');
-    setResult(null);
-    setEditedMatches([]);
-    setIssuerName('');
-    setIssuerEin('');
-    onOpenChange(false);
-  }, [onOpenChange]);
+  }, [result, editedMatches, issuerName, issuerEin, onApply, handleClose]);
 
   const updateMatchValue = useCallback(
     (index: number, value: number | string | boolean) => {

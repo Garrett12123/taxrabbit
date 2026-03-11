@@ -21,7 +21,7 @@ import {
   getBusinessProfileForYear,
   type BusinessProfileDecrypted,
 } from '@/server/services/business-service';
-import { listDocumentFilesByYear, type DocumentFileDecrypted } from '@/server/db/dal/document-files';
+import { listDocumentFilesByYear } from '@/server/db/dal/document-files';
 import { readVaultFile } from '@/server/storage/vault';
 import { requireDek } from '@/server/security/session';
 import { getYearEndSummary } from '@/server/services/report-service';
@@ -346,7 +346,6 @@ export async function generateCPAPacket(
 
   // 5. Documents (when checkbox is checked)
   let documentCount = 0;
-  let skippedDocCount = 0;
 
   if (includeDocuments) {
     const dek = await requireDek();
@@ -402,7 +401,7 @@ export async function generateCPAPacket(
         archive.append(content, { name: `${prefix}/${folder}/${deduped}` });
         documentCount++;
       } catch {
-        skippedDocCount++;
+        // Document could not be read — skip it
       }
     }
   }
